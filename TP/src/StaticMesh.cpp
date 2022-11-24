@@ -23,16 +23,11 @@ void StaticMesh::draw(const Frustum& frustum, const glm::mat4& transform, const 
     _vertex_buffer.bind(BufferUsage::Attribute);
     _index_buffer.bind(BufferUsage::Index);
     glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - position;
-    auto a = glm::dot(frustum._bottom_normal, center);
-    if (a < 0) return;
-    auto b = glm::dot(frustum._left_normal, center);
-    if (b < 0) return;
-    auto c = glm::dot(frustum._near_normal, center);
-    if (c < 0) return;
-    auto d = glm::dot(frustum._right_normal, center);
-    if (d < 0) return;
-    auto e = glm::dot(frustum._top_normal, center);
-    if (e < 0) return;
+    auto normals = std::vector<glm::vec3>{frustum._bottom_normal, frustum._left_normal, frustum._near_normal, frustum._right_normal, frustum._top_normal};
+    for (auto normal : normals) {
+        if (glm::dot(normal, center + normal * boundingSphereRadius) < 0)
+            return;
+    }
 
     // Vertex position
     glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
