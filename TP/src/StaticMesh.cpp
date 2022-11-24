@@ -1,17 +1,38 @@
 #include "StaticMesh.h"
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
 
 namespace OM3D {
+
+
 
 StaticMesh::StaticMesh(const MeshData& data) :
     _vertex_buffer(data.vertices),
     _index_buffer(data.indices) {
+        float maxDist = 0.0;
+        for (auto vertex : data.vertices) {
+            float dist = glm::l2Norm(vertex.position);
+            if (dist > maxDist) maxDist = dist;
+        }
+        boundingSphereRadius = maxDist;
 }
 
-void StaticMesh::draw() const {
+void StaticMesh::draw(const Frustum& frustum, const glm::mat4& transform, const glm::vec3 &position) const {
     _vertex_buffer.bind(BufferUsage::Attribute);
     _index_buffer.bind(BufferUsage::Index);
+    glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - position;
+    auto a = glm::dot(frustum._bottom_normal, center);
+    if (a < 0) return;
+    auto b = glm::dot(frustum._left_normal, center);
+    if (b < 0) return;
+    auto c = glm::dot(frustum._near_normal, center);
+    if (c < 0) return;
+    auto d = glm::dot(frustum._right_normal, center);
+    if (d < 0) return;
+    auto e = glm::dot(frustum._top_normal, center);
+    if (e < 0) return;
 
     // Vertex position
     glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);

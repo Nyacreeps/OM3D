@@ -47,7 +47,7 @@ void Scene::render(const Camera& camera) const {
 
     // Render every object
     for(const SceneObject& obj : _objects) {
-        obj.render();
+        obj.render(camera.build_frustum(), camera.position());
     }
 }
 

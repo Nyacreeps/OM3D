@@ -8,6 +8,8 @@
 
 #include <glm/matrix.hpp>
 
+#include "Camera.h"
+
 namespace OM3D {
 
 class SceneObject : NonCopyable {
@@ -15,7 +17,7 @@ class SceneObject : NonCopyable {
     public:
         SceneObject(std::shared_ptr<StaticMesh> mesh = nullptr, std::shared_ptr<Material> material = nullptr);
 
-        void render() const;
+        void render(const Frustum& frustum, const glm::vec3 &posistion) const;
 
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;
