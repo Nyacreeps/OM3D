@@ -93,6 +93,9 @@ void init_graphics() {
     glGenVertexArrays(1, &global_vao);
     glBindVertexArray(global_vao);
 
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
 }
 
 }
