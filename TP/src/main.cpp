@@ -171,6 +171,7 @@ int main(int, char**) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         tonemap_framebuffer.blit();
 
+        glDisable(GL_CULL_FACE); // ensure GUI does not cull
         // GUI
         imgui.start();
         {
