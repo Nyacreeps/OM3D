@@ -26,8 +26,6 @@ class StaticMesh : NonCopyable {
         StaticMesh(const MeshData& data);
 
         void draw(const Frustum& frustum, const glm::mat4&, const glm::vec3 &posistion) const;
-
-    private:
         TypedBuffer<Vertex> _vertex_buffer;
         TypedBuffer<u32> _index_buffer;
         float boundingSphereRadius;

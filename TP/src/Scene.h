@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <memory>
+#include <TypedBuffer.h>
+#include "Vertex.h"
 
 namespace OM3D {
 
@@ -25,6 +27,7 @@ class Scene : NonMovable {
     private:
         std::vector<SceneObject> _objects;
         std::vector<PointLight> _point_lights;
+        TypedBuffer<Instance> _instanceBuffer;
         glm::vec3 _sun_direction = glm::vec3(0.2f, 1.0f, 0.1f);
 };
 

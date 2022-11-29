@@ -50,6 +50,8 @@ class Material {
 
         BlendMode _blend_mode = BlendMode::None;
         DepthTestMode _depth_test_mode = DepthTestMode::Standard;
+    public:
+        int uid;
 
 };
 

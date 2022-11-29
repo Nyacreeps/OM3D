@@ -7,6 +7,8 @@
 namespace OM3D {
 
 Material::Material() {
+    static int i = 0;
+    uid = ++i;
 }
 
 void Material::set_program(std::shared_ptr<Program> prog) {

@@ -82,6 +82,33 @@ void process_inputs(GLFWwindow* window, Camera& camera) {
     mouse_pos = new_mouse_pos;
 }
 
+std::unique_ptr<Scene> load_scene(const std::string& name) {
+    auto scene = std::make_unique<Scene>();
+
+    // Load default cube model
+    auto result = Scene::from_gltf(std::string(data_path) + name);
+    ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
+    scene = std::move(result.value);
+
+    // Add lights
+    {
+        PointLight light;
+        light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
+        light.set_color(glm::vec3(0.0f, 10.0f, 0.0f));
+        light.set_radius(100.0f);
+        scene->add_object(std::move(light));
+    }
+    {
+        PointLight light;
+        light.set_position(glm::vec3(1.0f, 2.0f, -4.0f));
+        light.set_color(glm::vec3(10.0f, 0.0f, 0.0f));
+        light.set_radius(50.0f);
+        scene->add_object(std::move(light));
+    }
+
+    return scene;
+}
+
 
 std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
@@ -131,7 +158,7 @@ int main(int, char**) {
 
     ImGuiRenderer imgui(window);
 
-    std::unique_ptr<Scene> scene = create_default_scene();
+    std::unique_ptr<Scene> scene = load_scene("forest.glb");
     SceneView scene_view(scene.get());
 
     auto tonemap_program = Program::from_file("tonemap.comp");

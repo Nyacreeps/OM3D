@@ -19,10 +19,10 @@ StaticMesh::StaticMesh(const MeshData& data) :
         boundingSphereRadius = maxDist;
 }
 
-void StaticMesh::draw(const Frustum& frustum, const glm::mat4& transform, const glm::vec3 &position) const {
+void StaticMesh::draw(const Frustum& frustum, const glm::mat4& transform, const glm::vec3 &camPosition) const {
     _vertex_buffer.bind(BufferUsage::Attribute);
     _index_buffer.bind(BufferUsage::Index);
-    glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - position;
+    glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - camPosition;
     auto normals = std::vector<glm::vec3>{frustum._bottom_normal, frustum._left_normal, frustum._near_normal, frustum._right_normal, frustum._top_normal};
     for (auto normal : normals) {
         if (glm::dot(normal, center + normal * boundingSphereRadius) < 0)
