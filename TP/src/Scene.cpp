@@ -62,11 +62,13 @@ void Scene::render(const Camera &camera) const {
   // getting each unique material
   for (const SceneObject &obj : _objects) {
     int isCulled = false;
-    glm::vec3 center = glm::vec3(obj.transform() * glm::vec4(0.0, 0.0, 0.0, 1.0)) - camera.position();
+    auto transform = obj.transform();
+    glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - camera.position();
+    float scaling = std::sqrt(std::pow(transform[0][0], 2.0) + std::pow(transform[0][1], 2.0) + std::pow(transform[0][2], 2.0));
     auto frustum = camera.build_frustum();
     auto normals = std::vector<glm::vec3>{frustum._bottom_normal, frustum._left_normal, frustum._near_normal, frustum._right_normal, frustum._top_normal};
     for (auto normal : normals) {
-        if (glm::dot(normal, center + normal * obj._mesh->boundingSphereRadius) < 0)
+        if (glm::dot(normal, center + normal * obj._mesh->boundingSphereRadius * scaling) < 0)
             isCulled = true;
     }
     if (isCulled)

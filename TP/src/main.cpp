@@ -164,8 +164,11 @@ int main(int, char**) {
     auto tonemap_program = Program::from_file("tonemap.comp");
 
     Texture depth(window_size, ImageFormat::Depth32_FLOAT);
+    Texture albedo(window_size, ImageFormat::RGBA8_sRGB);
+    Texture normals(window_size, ImageFormat::RGBA8_UNORM);
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
+    Framebuffer gBuffer(&depth, std::array{&albedo, &normals});
     Framebuffer main_framebuffer(&depth, std::array{&lit});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
 
