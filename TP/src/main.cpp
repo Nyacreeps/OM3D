@@ -18,7 +18,7 @@
 using namespace OM3D;
 
 static float delta_time = 0.0f;
-const glm::uvec2 window_size(1600, 900);
+const glm::uvec2 window_size(800, 450);
 
 
 void glfw_check(bool cond) {
@@ -169,8 +169,13 @@ int main(int, char**) {
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
     Framebuffer gBuffer(&depth, std::array{&albedo, &normals});
-    Framebuffer main_framebuffer(&depth, std::array{&lit});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
+    auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
+    auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
+
+    bool debugAlbedo = true;
+    bool debugNormals = false;
+    bool debugDepth = false;
 
     for(;;) {
         glfwPollEvents();
@@ -184,13 +189,30 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
-        // Render the scene
+        // Render the scene to the gbuffer
         {
-            main_framebuffer.bind();
+            gBuffer.bind();
             scene_view.render();
         }
 
-        // Apply a tonemap in compute shader
+        if (debugAlbedo) {
+            gdebug_program1->bind();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            albedo.bind(0);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        } else if (debugNormals) {
+            gdebug_program1->bind();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            normals.bind(0);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        } else if (debugDepth) {
+            gdebug_program2->bind();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            depth.bind(0);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
+
+        /* // Apply a tonemap in compute shader
         {
             tonemap_program->bind();
             lit.bind(0);
@@ -199,7 +221,7 @@ int main(int, char**) {
         }
         // Blit tonemap result to screen
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        tonemap_framebuffer.blit();
+        tonemap_framebuffer.blit(); */
 
         glDisable(GL_CULL_FACE); // ensure GUI does not cull
         // GUI
@@ -215,6 +237,9 @@ int main(int, char**) {
                     scene_view = SceneView(scene.get());
                 }
             }
+            ImGui::Checkbox("debug albedo", &debugAlbedo);
+            ImGui::Checkbox("debug normals", &debugNormals);
+            ImGui::Checkbox("debug depth", &debugDepth);
         }
         imgui.finish();
 
