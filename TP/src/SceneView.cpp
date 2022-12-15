@@ -13,6 +13,12 @@ const Camera& SceneView::camera() const {
     return _camera;
 }
 
+void SceneView::bindShading() const {
+    if(_scene) {
+        _scene->bindShading(_camera);
+    }
+}
+
 void SceneView::render() const {
     if(_scene) {
         _scene->render(_camera);
