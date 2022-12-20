@@ -13,9 +13,9 @@ const Camera& SceneView::camera() const {
     return _camera;
 }
 
-void SceneView::bindShading() const {
+void SceneView::renderShading() const {
     if(_scene) {
-        _scene->bindShading(_camera);
+        _scene->renderShading(_camera);
     }
 }
 

@@ -19,7 +19,7 @@ class Scene : NonMovable {
 
         static Result<std::unique_ptr<Scene>> from_gltf(const std::string& file_name);
 
-        void bindShading(const Camera &camera) const;
+        void renderShading(const Camera &camera) const;
         void render(const Camera& camera) const;
 
         void add_object(SceneObject obj);

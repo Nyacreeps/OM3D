@@ -22,7 +22,7 @@ void Scene::add_object(PointLight obj) {
     _point_lights.emplace_back(std::move(obj));
 }
 
-void Scene::bindShading(const Camera& camera) const {
+void Scene::renderShading(const Camera& camera) const {
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
     {
@@ -45,6 +45,7 @@ void Scene::bindShading(const Camera& camera) const {
         }
     }
     light_buffer.bind(BufferUsage::Storage, 1);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 void Scene::render(const Camera& camera) const {

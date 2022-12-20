@@ -189,11 +189,10 @@ int main(int, char**) {
         } else {
             shading_program->bind();
             mainFrameBuffer.bind();
-            albedo.bind(0);
-            normals.bind(1);
-            depth.bind(2);
-            scene_view.bindShading();
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            albedo.bind(1);
+            normals.bind(2);
+            depth.bind(3);
+            scene_view.renderShading();
             // Apply a tonemap in compute shader
             {
                 tonemap_program->bind();

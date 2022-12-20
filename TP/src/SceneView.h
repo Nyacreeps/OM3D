@@ -13,7 +13,7 @@ class SceneView {
         Camera& camera();
         const Camera& camera() const;
         
-        void bindShading() const;
+        void renderShading() const;
         void render() const;
 
     private:
