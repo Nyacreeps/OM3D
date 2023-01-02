@@ -19,6 +19,12 @@ void SceneView::renderShading() const {
     }
 }
 
+void SceneView::renderShadingSpheres(std::shared_ptr<Program> programp) const {
+    if(_scene) {
+        _scene->renderShadingSpheres(_camera, programp);
+    }
+}
+
 void SceneView::render() const {
     if(_scene) {
         _scene->render(_camera);

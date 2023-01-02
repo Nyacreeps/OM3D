@@ -20,6 +20,13 @@ struct Instance {
     glm::mat4 model = glm::mat4(1.0);
 };
 
+struct LightInstance {
+    glm::mat4 model = glm::mat4(1.0);
+    glm::vec3 pos;
+    glm::vec3 color;
+    float radius;
+};
+
 }
 
 #endif // VERTEX_H

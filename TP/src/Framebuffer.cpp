@@ -54,12 +54,15 @@ Framebuffer::~Framebuffer() {
 }
 
 
-void Framebuffer::bind(bool clear) const {
+void Framebuffer::bind(bool clear, bool clearDepth) const {
     glBindFramebuffer(GL_FRAMEBUFFER, _handle.get());
     glViewport(0, 0, _size.x, _size.y);
 
     if(clear) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        if (clearDepth)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        else
+            glClear(GL_COLOR_BUFFER_BIT);
     }
 }
 

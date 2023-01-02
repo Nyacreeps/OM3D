@@ -147,11 +147,13 @@ int main(int, char**) {
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
     auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
-    auto shading_program = Program::from_files("shading.frag", "screen.vert");
+    auto shading_program1 = Program::from_files("shading.frag", "screen.vert");
+    auto shading_program2 = Program::from_files("shading2.frag", "shading.vert");
 
     bool debugAlbedo = false;
     bool debugNormals = false;
     bool debugDepth = false;
+    bool renderSpheres = false;
 
     for (;;) {
         glfwPollEvents();
@@ -187,12 +189,20 @@ int main(int, char**) {
             depth.bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
         } else {
-            shading_program->bind();
-            mainFrameBuffer.bind();
-            albedo.bind(1);
-            normals.bind(2);
-            depth.bind(3);
-            scene_view.renderShading();
+            glDepthMask(GL_FALSE);
+            mainFrameBuffer.bind(true, false);
+            albedo.bind(0);
+            normals.bind(1);
+            depth.bind(2);
+            if (renderSpheres)
+                scene_view.renderShadingSpheres(shading_program2);
+            else {
+                glDisable(GL_DEPTH_TEST);
+                shading_program1->bind();
+                scene_view.renderShading();
+                glEnable(GL_DEPTH_TEST);
+            }
+            glDepthMask(GL_TRUE);
             // Apply a tonemap in compute shader
             {
                 tonemap_program->bind();
@@ -223,6 +233,7 @@ int main(int, char**) {
             ImGui::Checkbox("debug albedo", &debugAlbedo);
             ImGui::Checkbox("debug normals", &debugNormals);
             ImGui::Checkbox("debug depth", &debugDepth);
+            ImGui::Checkbox("render spheres", &renderSpheres);
         }
         imgui.finish();
 

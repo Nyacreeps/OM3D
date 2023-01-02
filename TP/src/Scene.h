@@ -12,6 +12,8 @@
 
 namespace OM3D {
 
+Result<std::shared_ptr<StaticMesh>> meshFromGltf(const std::string& file_name);
+
 class Scene : NonMovable {
 
     public:
@@ -20,6 +22,7 @@ class Scene : NonMovable {
         static Result<std::unique_ptr<Scene>> from_gltf(const std::string& file_name);
 
         void renderShading(const Camera &camera) const;
+        void renderShadingSpheres(const Camera &camera, std::shared_ptr<Program> programp) const;
         void render(const Camera& camera) const;
 
         void add_object(SceneObject obj);

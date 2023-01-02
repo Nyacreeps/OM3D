@@ -1,6 +1,7 @@
 #include "Scene.h"
 
 #include <TypedBuffer.h>
+#include "graphics.h"
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -45,7 +46,98 @@ void Scene::renderShading(const Camera& camera) const {
         }
     }
     light_buffer.bind(BufferUsage::Storage, 1);
+
     glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> programp) const {
+    // Fill and bind frame data buffer
+    TypedBuffer<shader::FrameData> buffer(nullptr, 1);
+    {
+        auto mapping = buffer.map(AccessType::WriteOnly);
+        mapping[0].camera.view_proj = camera.view_proj_matrix();
+        mapping[0].point_light_count = u32(_point_lights.size());
+        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].sun_dir = glm::normalize(_sun_direction);
+    }
+    buffer.bind(BufferUsage::Uniform, 0);
+
+    // Fill and bind lights buffer
+    TypedBuffer<shader::PointLight> light_buffer(nullptr,
+                                                 std::max(_point_lights.size(), size_t(1)));
+    {
+        auto mapping = light_buffer.map(AccessType::WriteOnly);
+        for (size_t i = 0; i != _point_lights.size(); ++i) {
+            const auto& light = _point_lights[i];
+            mapping[i] = {light.position(), light.radius(), light.color(), 0.0f};
+        }
+    }
+    light_buffer.bind(BufferUsage::Storage, 1);
+
+    auto sphereMeshp = meshFromGltf(std::string(data_path) + "sphere.glb").value;
+    sphereMeshp->_vertex_buffer.bind(BufferUsage::Attribute);
+    sphereMeshp->_index_buffer.bind(BufferUsage::Index);
+
+    auto mat = Material();
+    mat.set_blend_mode(BlendMode::Additive);
+    mat.set_depth_test_mode(DepthTestMode::Standard);
+    mat.set_program(programp);
+    mat.bind();
+
+    // Vertex position
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+    // Vertex normal
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
+                          reinterpret_cast<void*>(3 * sizeof(float)));
+    // Vertex uv
+    glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
+                          reinterpret_cast<void*>(6 * sizeof(float)));
+    // Tangent / bitangent sign
+    glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
+                          reinterpret_cast<void*>(8 * sizeof(float)));
+    // Vertex color
+    glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
+                          reinterpret_cast<void*>(12 * sizeof(float)));
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(4);
+
+    std::vector<LightInstance> instanceVertices;
+    for (auto& pointLight : this->_point_lights) {
+        glm::mat4 trans = glm::translate(glm::mat4(1.0), pointLight.position());
+        glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(pointLight.radius() * 0.1));
+        instanceVertices.push_back({trans * scale});
+    }
+    TypedBuffer<LightInstance> instanceBuffer(instanceVertices);
+    instanceBuffer.bind(BufferUsage::Attribute);
+    glVertexAttribPointer(5, 4, GL_FLOAT, false, sizeof(LightInstance), 0);
+    glVertexAttribPointer(6, 4, GL_FLOAT, false, sizeof(LightInstance), (void*)(4 * sizeof(GLfloat)));
+    glVertexAttribPointer(7, 4, GL_FLOAT, false, sizeof(LightInstance), (void*)(8 * sizeof(GLfloat)));
+    glVertexAttribPointer(8, 4, GL_FLOAT, false, sizeof(LightInstance), (void*)(12 * sizeof(GLfloat)));
+    glVertexAttribPointer(9, 3, GL_FLOAT, false, sizeof(LightInstance), (void*)offsetof(LightInstance, pos));
+    glVertexAttribPointer(10, 3, GL_FLOAT, false, sizeof(LightInstance), (void*)offsetof(LightInstance, color));
+    glVertexAttribPointer(11, 1, GL_FLOAT, false, sizeof(LightInstance), (void*)offsetof(LightInstance, radius));
+    glEnableVertexAttribArray(5);
+    glEnableVertexAttribArray(6);
+    glEnableVertexAttribArray(7);
+    glEnableVertexAttribArray(8);
+    glEnableVertexAttribArray(9);
+    glEnableVertexAttribArray(10);
+    glEnableVertexAttribArray(11);
+
+    glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
+    glVertexAttribDivisor(7, 1);
+    glVertexAttribDivisor(8, 1);
+    glVertexAttribDivisor(9, 1);
+    glVertexAttribDivisor(10, 1);
+    glVertexAttribDivisor(11, 1);
+
+    glDrawElementsInstanced(GL_TRIANGLES, int(sphereMeshp->_index_buffer.element_count()),
+                            GL_UNSIGNED_INT, 0, instanceVertices.size());
 }
 
 void Scene::render(const Camera& camera) const {

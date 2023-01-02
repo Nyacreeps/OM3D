@@ -2,6 +2,10 @@
 
 #include "utils.glsl"
 
+layout(location = 0) in vec3 light_pos;
+layout(location = 1) in vec3 light_color;
+layout(location = 2) in float light_radius;
+
 layout(location = 0) out vec4 out_color;
 
 layout(binding = 0) uniform sampler2D in_albedo;
@@ -33,20 +37,17 @@ void main() {
 
     vec3 acc = frame.sun_color * max(0.0, dot(frame.sun_dir, normal)) + ambient;
 
-    for(uint i = 0; i != frame.point_light_count; ++i) {
-        PointLight light = point_lights[i];
-        const vec3 to_light = (light.position - position);
-        const float dist = length(to_light);
-        const vec3 light_vec = to_light / dist;
+    const vec3 to_light = (light_pos - position);
+    const float dist = length(to_light);
+    const vec3 light_vec = to_light / dist;
 
-        const float NoL = dot(light_vec, normal);
-        const float att = attenuation(dist, light.radius);
-        if(NoL <= 0.0 || att <= 0.0f) {
-            continue;
-        }
-
-        acc += light.color * (NoL * att);
+    const float NoL = dot(light_vec, normal);
+    const float att = attenuation(dist, light_radius);
+    if (NoL <= 0.0 || att <= 0.0f) {
+        return;
     }
 
-    out_color = vec4(albedo * acc, 0.0);
+    acc += light_color * (NoL * att);
+
+    out_color = vec4(albedo * acc, 1.0);
 }
