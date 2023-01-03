@@ -109,7 +109,7 @@ void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> 
     for (auto& pointLight : this->_point_lights) {
         glm::mat4 trans = glm::translate(glm::mat4(1.0), pointLight.position());
         glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(pointLight.radius() * 0.1));
-        instanceVertices.push_back({trans * scale});
+        instanceVertices.push_back({trans * scale, pointLight.position(), pointLight.color(), pointLight.radius()});
     }
     TypedBuffer<LightInstance> instanceBuffer(instanceVertices);
     instanceBuffer.bind(BufferUsage::Attribute);

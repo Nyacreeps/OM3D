@@ -93,14 +93,14 @@ std::unique_ptr<Scene> create_default_scene() {
     {
         PointLight light;
         light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
-        light.set_color(glm::vec3(0.0f, 10.0f, 0.0f));
+        light.set_color(glm::vec3(1.0f, 1.0f, 1.0f));
         light.set_radius(100.0f);
         scene->add_object(std::move(light));
     }
     {
         PointLight light;
         light.set_position(glm::vec3(1.0f, 2.0f, -4.0f));
-        light.set_color(glm::vec3(10.0f, 0.0f, 0.0f));
+        light.set_color(glm::vec3(1.0f, 1.0f, 1.0f));
         light.set_radius(50.0f);
         scene->add_object(std::move(light));
     }
@@ -198,8 +198,10 @@ int main(int, char**) {
                 scene_view.renderShadingSpheres(shading_program2);
             else {
                 glDisable(GL_DEPTH_TEST);
+                glDisable(GL_CULL_FACE);
                 shading_program1->bind();
                 scene_view.renderShading();
+                glEnable(GL_CULL_FACE);
                 glEnable(GL_DEPTH_TEST);
             }
             glDepthMask(GL_TRUE);

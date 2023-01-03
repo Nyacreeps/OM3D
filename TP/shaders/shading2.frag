@@ -42,12 +42,8 @@ void main() {
     const vec3 light_vec = to_light / dist;
 
     const float NoL = dot(light_vec, normal);
-    const float att = attenuation(dist, light_radius);
-    if (NoL <= 0.0 || att <= 0.0f) {
-        return;
-    }
 
-    acc += light_color * (NoL * att);
+    acc = light_color * NoL;
 
     out_color = vec4(albedo * acc, 1.0);
 }
