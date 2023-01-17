@@ -81,7 +81,7 @@ void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> 
     }
     light_buffer.bind(BufferUsage::Storage, 1);
 
-    auto sphereMeshp = meshFromGltf(std::string(data_path) + "sphere.glb").value;
+    static auto sphereMeshp = meshFromGltf(std::string(data_path) + "sphere.glb").value;
     sphereMeshp->_vertex_buffer.bind(BufferUsage::Attribute);
     sphereMeshp->_index_buffer.bind(BufferUsage::Index);
 
