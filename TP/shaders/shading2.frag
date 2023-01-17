@@ -35,15 +35,14 @@ void main() {
     float depth = texelFetch(in_normal, ivec2(gl_FragCoord.xy), 0).r;
     vec3 position = unproject(gl_FragCoord.xy, depth, inverse(frame.camera.view_proj));
 
-    vec3 acc = frame.sun_color * max(0.0, dot(frame.sun_dir, normal)) + ambient;
-
     const vec3 to_light = (light_pos - position);
     const float dist = length(to_light);
     const vec3 light_vec = to_light / dist;
 
-    const float NoL = dot(light_vec, normal);
+    const float NoL = max(dot(light_vec, normal), 0.0);
+    const float att = attenuation(dist, light_radius);
 
-    acc = light_color * NoL;
+    vec3 acc = light_color;
 
     out_color = vec4(albedo * acc, 1.0);
 }

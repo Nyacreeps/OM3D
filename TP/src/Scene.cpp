@@ -23,7 +23,7 @@ void Scene::add_object(PointLight obj) {
     _point_lights.emplace_back(std::move(obj));
 }
 
-void Scene::renderShading(const Camera& camera) const {
+void Scene::renderShading(const Camera& camera, std::shared_ptr<Program> programp) const {
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
     {
@@ -46,6 +46,13 @@ void Scene::renderShading(const Camera& camera) const {
         }
     }
     light_buffer.bind(BufferUsage::Storage, 1);
+
+    auto mat = Material();
+    mat.set_blend_mode(BlendMode::None);
+    mat.set_depth_test_mode(DepthTestMode::None);
+    mat.set_depth_mask_mode(DepthMaskMode::False);
+    mat.set_program(programp);
+    mat.bind();
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
@@ -81,6 +88,7 @@ void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> 
     auto mat = Material();
     mat.set_blend_mode(BlendMode::Additive);
     mat.set_depth_test_mode(DepthTestMode::Standard);
+    mat.set_depth_mask_mode(DepthMaskMode::False);
     mat.set_program(programp);
     mat.bind();
 

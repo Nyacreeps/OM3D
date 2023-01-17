@@ -143,7 +143,7 @@ int main(int, char**) {
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
     Framebuffer gBuffer(&depth, std::array{&albedo, &normals});
-    Framebuffer mainFrameBuffer(nullptr, std::array{&lit});
+    Framebuffer mainFrameBuffer(&depth, std::array{&lit});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
     auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
@@ -189,7 +189,6 @@ int main(int, char**) {
             depth.bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
         } else {
-            glDepthMask(GL_FALSE);
             mainFrameBuffer.bind(true, false);
             albedo.bind(0);
             normals.bind(1);
@@ -197,14 +196,8 @@ int main(int, char**) {
             if (renderSpheres)
                 scene_view.renderShadingSpheres(shading_program2);
             else {
-                glDisable(GL_DEPTH_TEST);
-                glDisable(GL_CULL_FACE);
-                shading_program1->bind();
-                scene_view.renderShading();
-                glEnable(GL_CULL_FACE);
-                glEnable(GL_DEPTH_TEST);
+                scene_view.renderShading(shading_program1);
             }
-            glDepthMask(GL_TRUE);
             // Apply a tonemap in compute shader
             {
                 tonemap_program->bind();

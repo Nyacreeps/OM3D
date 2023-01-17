@@ -13,7 +13,7 @@ class SceneView {
         Camera& camera();
         const Camera& camera() const;
         
-        void renderShading() const;
+        void renderShading(std::shared_ptr<Program> programp) const;
         void renderShadingSpheres(std::shared_ptr<Program> programp) const;
         void render() const;
 

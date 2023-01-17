@@ -23,6 +23,10 @@ void Material::set_depth_test_mode(DepthTestMode depth) {
     _depth_test_mode = depth;
 }
 
+void Material::set_depth_mask_mode(DepthMaskMode mask) {
+    _depth_mask_mode = mask;
+}
+
 void Material::set_texture(u32 slot, std::shared_ptr<Texture> tex) {
     if (const auto it = std::find_if(_textures.begin(), _textures.end(),
                                      [&](const auto& t) { return t.second == tex; });
@@ -50,6 +54,7 @@ void Material::bind() const {
             glEnable(GL_BLEND);
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
+            glBlendEquation(GL_FUNC_ADD);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
             break;
     }
@@ -74,6 +79,15 @@ void Material::bind() const {
             glEnable(GL_DEPTH_TEST);
             // We are using reverse-Z
             glDepthFunc(GL_LEQUAL);
+            break;
+    }
+
+    switch(_depth_mask_mode) {
+        case DepthMaskMode::True:
+            glDepthMask(GL_TRUE);
+            break;
+        case DepthMaskMode::False:
+            glDepthMask(GL_FALSE);
             break;
     }
 

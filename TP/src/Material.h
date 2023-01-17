@@ -22,6 +22,11 @@ enum class DepthTestMode {
     None
 };
 
+enum class DepthMaskMode {
+    True,
+    False
+};
+
 class Material {
 
     public:
@@ -30,6 +35,7 @@ class Material {
         void set_program(std::shared_ptr<Program> prog);
         void set_blend_mode(BlendMode blend);
         void set_depth_test_mode(DepthTestMode depth);
+        void set_depth_mask_mode(DepthMaskMode mask);
         void set_texture(u32 slot, std::shared_ptr<Texture> tex);
 
         template<typename... Args>
@@ -51,6 +57,7 @@ class Material {
 
         BlendMode _blend_mode = BlendMode::None;
         DepthTestMode _depth_test_mode = DepthTestMode::Standard;
+        DepthMaskMode _depth_mask_mode = DepthMaskMode::True;
     public:
         int uid;
 

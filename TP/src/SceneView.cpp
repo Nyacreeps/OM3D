@@ -13,9 +13,9 @@ const Camera& SceneView::camera() const {
     return _camera;
 }
 
-void SceneView::renderShading() const {
+void SceneView::renderShading(std::shared_ptr<Program> programp) const {
     if(_scene) {
-        _scene->renderShading(_camera);
+        _scene->renderShading(_camera, programp);
     }
 }
 

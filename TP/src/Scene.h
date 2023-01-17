@@ -21,7 +21,7 @@ class Scene : NonMovable {
 
         static Result<std::unique_ptr<Scene>> from_gltf(const std::string& file_name);
 
-        void renderShading(const Camera &camera) const;
+        void renderShading(const Camera &camera, std::shared_ptr<Program> programp) const;
         void renderShadingSpheres(const Camera &camera, std::shared_ptr<Program> programp) const;
         void render(const Camera& camera) const;
 
