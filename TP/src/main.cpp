@@ -92,7 +92,7 @@ std::unique_ptr<Scene> create_default_scene() {
     // Add lights
     {
         PointLight light;
-        light.set_position(glm::vec3(1.0f, 40.0f, 4.0f));
+        light.set_position(glm::vec3(1.0f, 100.0f, 4.0f));
         light.set_color(glm::vec3(1.0f, 1.0f, 1.0f));
         light.set_radius(1000.0f);
         scene->add_object(std::move(light));
@@ -229,10 +229,10 @@ int main(int, char**) {
                     scene_view = SceneView(scene.get());
                 }
             }
-            ImGui::Checkbox("debug albedo", &debugAlbedo);
-            ImGui::Checkbox("debug normals", &debugNormals);
-            ImGui::Checkbox("debug depth", &debugDepth);
-            ImGui::Checkbox("render spheres", &renderSpheres);
+            ImGui::Checkbox("Display Gbuffer albedo", &debugAlbedo);
+            ImGui::Checkbox("Display Gbuffer normals", &debugNormals);
+            ImGui::Checkbox("Display Gbuffer depth", &debugDepth);
+            ImGui::Checkbox("Switch to volume based deferred shading", &renderSpheres);
         }
         imgui.finish();
 
