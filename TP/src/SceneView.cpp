@@ -25,6 +25,12 @@ void SceneView::renderShadingSpheres(std::shared_ptr<Program> programp) const {
     }
 }
 
+void SceneView::renderShadingDirectional(std::shared_ptr<Program> programp) const {
+    if(_scene) {
+        _scene->renderShadingDirectional(_camera, programp);
+    }
+}
+
 void SceneView::render() const {
     if(_scene) {
         _scene->render(_camera);

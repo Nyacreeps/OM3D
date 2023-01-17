@@ -92,9 +92,9 @@ std::unique_ptr<Scene> create_default_scene() {
     // Add lights
     {
         PointLight light;
-        light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
+        light.set_position(glm::vec3(1.0f, 40.0f, 4.0f));
         light.set_color(glm::vec3(1.0f, 1.0f, 1.0f));
-        light.set_radius(100.0f);
+        light.set_radius(1000.0f);
         scene->add_object(std::move(light));
     }
     {
@@ -148,7 +148,10 @@ int main(int, char**) {
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
     auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
     auto shading_program1 = Program::from_files("shading.frag", "screen.vert");
-    auto shading_program2 = Program::from_files("shading2.frag", "shading.vert");
+    auto shadingspheres_program =
+        Program::from_files("shading_spheres.frag", "shading_spheres.vert");
+    auto shadingdirectional_program =
+        Program::from_files("shading_directional.frag", "screen.vert");
 
     bool debugAlbedo = false;
     bool debugNormals = false;
@@ -193,9 +196,10 @@ int main(int, char**) {
             albedo.bind(0);
             normals.bind(1);
             depth.bind(2);
-            if (renderSpheres)
-                scene_view.renderShadingSpheres(shading_program2);
-            else {
+            if (renderSpheres) {
+                scene_view.renderShadingDirectional(shadingdirectional_program);
+                scene_view.renderShadingSpheres(shadingspheres_program);
+            } else {
                 scene_view.renderShading(shading_program1);
             }
             // Apply a tonemap in compute shader

@@ -15,6 +15,7 @@ class SceneView {
         
         void renderShading(std::shared_ptr<Program> programp) const;
         void renderShadingSpheres(std::shared_ptr<Program> programp) const;
+        void renderShadingDirectional(std::shared_ptr<Program> programp) const;
         void render() const;
 
     private:

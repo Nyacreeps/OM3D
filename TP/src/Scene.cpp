@@ -87,7 +87,7 @@ void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> 
 
     auto mat = Material();
     mat.set_blend_mode(BlendMode::Additive);
-    mat.set_depth_test_mode(DepthTestMode::Standard);
+    mat.set_depth_test_mode(DepthTestMode::Reversed);
     mat.set_depth_mask_mode(DepthMaskMode::False);
     mat.set_program(programp);
     mat.bind();
@@ -117,17 +117,24 @@ void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> 
     for (auto& pointLight : this->_point_lights) {
         glm::mat4 trans = glm::translate(glm::mat4(1.0), pointLight.position());
         glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(pointLight.radius() * 0.1));
-        instanceVertices.push_back({trans * scale, pointLight.position(), pointLight.color(), pointLight.radius()});
+        instanceVertices.push_back(
+            {trans * scale, pointLight.position(), pointLight.color(), pointLight.radius()});
     }
     TypedBuffer<LightInstance> instanceBuffer(instanceVertices);
     instanceBuffer.bind(BufferUsage::Attribute);
     glVertexAttribPointer(5, 4, GL_FLOAT, false, sizeof(LightInstance), 0);
-    glVertexAttribPointer(6, 4, GL_FLOAT, false, sizeof(LightInstance), (void*)(4 * sizeof(GLfloat)));
-    glVertexAttribPointer(7, 4, GL_FLOAT, false, sizeof(LightInstance), (void*)(8 * sizeof(GLfloat)));
-    glVertexAttribPointer(8, 4, GL_FLOAT, false, sizeof(LightInstance), (void*)(12 * sizeof(GLfloat)));
-    glVertexAttribPointer(9, 3, GL_FLOAT, false, sizeof(LightInstance), (void*)offsetof(LightInstance, pos));
-    glVertexAttribPointer(10, 3, GL_FLOAT, false, sizeof(LightInstance), (void*)offsetof(LightInstance, color));
-    glVertexAttribPointer(11, 1, GL_FLOAT, false, sizeof(LightInstance), (void*)offsetof(LightInstance, radius));
+    glVertexAttribPointer(6, 4, GL_FLOAT, false, sizeof(LightInstance),
+                          (void*)(4 * sizeof(GLfloat)));
+    glVertexAttribPointer(7, 4, GL_FLOAT, false, sizeof(LightInstance),
+                          (void*)(8 * sizeof(GLfloat)));
+    glVertexAttribPointer(8, 4, GL_FLOAT, false, sizeof(LightInstance),
+                          (void*)(12 * sizeof(GLfloat)));
+    glVertexAttribPointer(9, 3, GL_FLOAT, false, sizeof(LightInstance),
+                          (void*)offsetof(LightInstance, pos));
+    glVertexAttribPointer(10, 3, GL_FLOAT, false, sizeof(LightInstance),
+                          (void*)offsetof(LightInstance, color));
+    glVertexAttribPointer(11, 1, GL_FLOAT, false, sizeof(LightInstance),
+                          (void*)offsetof(LightInstance, radius));
     glEnableVertexAttribArray(5);
     glEnableVertexAttribArray(6);
     glEnableVertexAttribArray(7);
@@ -261,6 +268,41 @@ void Scene::render(const Camera& camera) const {
         glDrawElementsInstanced(GL_TRIANGLES, int(value.mesh->_index_buffer.element_count()),
                                 GL_UNSIGNED_INT, 0, value.instanceVertices.size());
     }
+}
+
+void Scene::renderShadingDirectional(const Camera& camera,
+                                     std::shared_ptr<Program> programp) const {
+    // Fill and bind frame data buffer
+    TypedBuffer<shader::FrameData> buffer(nullptr, 1);
+    {
+        auto mapping = buffer.map(AccessType::WriteOnly);
+        mapping[0].camera.view_proj = camera.view_proj_matrix();
+        mapping[0].point_light_count = u32(_point_lights.size());
+        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].sun_dir = glm::normalize(_sun_direction);
+    }
+    buffer.bind(BufferUsage::Uniform, 0);
+
+    // Fill and bind lights buffer
+    TypedBuffer<shader::PointLight> light_buffer(nullptr,
+                                                 std::max(_point_lights.size(), size_t(1)));
+    {
+        auto mapping = light_buffer.map(AccessType::WriteOnly);
+        for (size_t i = 0; i != _point_lights.size(); ++i) {
+            const auto& light = _point_lights[i];
+            mapping[i] = {light.position(), light.radius(), light.color(), 0.0f};
+        }
+    }
+    light_buffer.bind(BufferUsage::Storage, 1);
+
+    auto mat = Material();
+    mat.set_blend_mode(BlendMode::None);
+    mat.set_depth_test_mode(DepthTestMode::None);
+    mat.set_depth_mask_mode(DepthMaskMode::False);
+    mat.set_program(programp);
+    mat.bind();
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 } // namespace OM3D

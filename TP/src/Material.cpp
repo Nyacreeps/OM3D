@@ -42,6 +42,7 @@ void Material::bind() const {
         case BlendMode::None:
             glDisable(GL_BLEND);
             glEnable(GL_CULL_FACE);
+            glCullFace(GL_BACK);
             break;
 
         case BlendMode::Alpha:
@@ -53,7 +54,7 @@ void Material::bind() const {
         case BlendMode::Additive:
             glEnable(GL_BLEND);
             glEnable(GL_CULL_FACE);
-            glCullFace(GL_BACK);
+            glCullFace(GL_FRONT);
             glBlendEquation(GL_FUNC_ADD);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
             break;
