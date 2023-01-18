@@ -153,9 +153,8 @@ int main(int, char**) {
     auto shadingdirectional_program =
         Program::from_files("shading_directional.frag", "screen.vert");
 
-    bool debugAlbedo = false;
-    bool debugNormals = false;
-    bool debugDepth = false;
+    int debugMode = 0;
+    int gBufferRenderMode = 0;
     bool renderSpheres = false;
 
     for (;;) {
@@ -176,17 +175,17 @@ int main(int, char**) {
             scene_view.render();
         }
 
-        if (debugAlbedo) {
+        if (debugMode == 1) {
             gdebug_program1->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             albedo.bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-        } else if (debugNormals) {
+        } else if (debugMode == 2) {
             gdebug_program1->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             normals.bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-        } else if (debugDepth) {
+        } else if (debugMode == 3) {
             gdebug_program2->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             depth.bind(0);
@@ -229,9 +228,12 @@ int main(int, char**) {
                     scene_view = SceneView(scene.get());
                 }
             }
-            ImGui::Checkbox("Display Gbuffer albedo", &debugAlbedo);
-            ImGui::Checkbox("Display Gbuffer normals", &debugNormals);
-            ImGui::Checkbox("Display Gbuffer depth", &debugDepth);
+            ImGui::RadioButton("Classic prepass", &gBufferRenderMode, 0);
+            ImGui::RadioButton("Occlusion culling prepass", &gBufferRenderMode, 1);
+            ImGui::RadioButton("Normal display", &debugMode, 0);
+            ImGui::RadioButton("Display Gbuffer albedo", &debugMode, 1);
+            ImGui::RadioButton("Display Gbuffer normals", &debugMode, 2);
+            ImGui::RadioButton("Display Gbuffer depth", &debugMode, 3);
             ImGui::Checkbox("Switch to volume based deferred shading", &renderSpheres);
         }
         imgui.finish();
