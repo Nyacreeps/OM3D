@@ -37,4 +37,10 @@ void SceneView::render() const {
     }
 }
 
+void SceneView::renderOcclusion() const {
+    if(_scene) {
+        _scene->renderOcclusion(_camera);
+    }
+}
+
 }

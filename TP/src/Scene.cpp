@@ -155,7 +155,8 @@ void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> 
                             GL_UNSIGNED_INT, 0, instanceVertices.size());
 }
 
-void Scene::render(const Camera& camera) const {
+void Scene::renderShadingDirectional(const Camera& camera,
+                                     std::shared_ptr<Program> programp) const {
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
     {
@@ -179,11 +180,39 @@ void Scene::render(const Camera& camera) const {
     }
     light_buffer.bind(BufferUsage::Storage, 1);
 
-    // Render every object
-    // NON INSTANCED DRAW
-    /* for(const SceneObject& obj : _objects) {
-        obj.render(camera.build_frustum(), camera.position());
-    } */
+    auto mat = Material();
+    mat.set_blend_mode(BlendMode::None);
+    mat.set_depth_test_mode(DepthTestMode::None);
+    mat.set_depth_mask_mode(DepthMaskMode::False);
+    mat.set_program(programp);
+    mat.bind();
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+void Scene::render(const Camera& camera) const {
+    // Fill and bind frame data buffer
+    TypedBuffer<shader::FrameData> buffer(nullptr, 1);
+    {
+        auto mapping = buffer.map(AccessType::WriteOnly);
+        mapping[0].camera.view_proj = camera.view_proj_matrix();
+        mapping[0].point_light_count = u32(_point_lights.size());
+        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].sun_dir = glm::normalize(_sun_direction);
+    }
+    buffer.bind(BufferUsage::Uniform, 0);
+
+    // Fill and bind lights buffer
+    TypedBuffer<shader::PointLight> light_buffer(nullptr,
+                                                 std::max(_point_lights.size(), size_t(1)));
+    {
+        auto mapping = light_buffer.map(AccessType::WriteOnly);
+        for (size_t i = 0; i != _point_lights.size(); ++i) {
+            const auto& light = _point_lights[i];
+            mapping[i] = {light.position(), light.radius(), light.color(), 0.0f};
+        }
+    }
+    light_buffer.bind(BufferUsage::Storage, 1);
 
     // INSTANCED DRAW (stupid)
     struct InstanceDrawData {
@@ -212,8 +241,6 @@ void Scene::render(const Camera& camera) const {
         instanceGroups[obj._material->uid].instanceVertices.push_back({obj.transform()});
         instanceGroups[obj._material->uid].mat = obj._material;
         instanceGroups[obj._material->uid].mesh = obj._mesh;
-        // we should have the mesh as a key, but it seems like 2 identical cubes
-        // will have 2 different StaticMesh instances here
     }
 
     for (auto& [key, value] : instanceGroups) {
@@ -270,8 +297,7 @@ void Scene::render(const Camera& camera) const {
     }
 }
 
-void Scene::renderShadingDirectional(const Camera& camera,
-                                     std::shared_ptr<Program> programp) const {
+void Scene::renderOcclusion(const Camera& camera) const {
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
     {
@@ -295,14 +321,79 @@ void Scene::renderShadingDirectional(const Camera& camera,
     }
     light_buffer.bind(BufferUsage::Storage, 1);
 
-    auto mat = Material();
-    mat.set_blend_mode(BlendMode::None);
-    mat.set_depth_test_mode(DepthTestMode::None);
-    mat.set_depth_mask_mode(DepthMaskMode::False);
-    mat.set_program(programp);
-    mat.bind();
+    // Render every object
+    GLuint queryId;
+    glGenQueries(1, &queryId);
+    for (const SceneObject& obj : _objects) {
+        if (!obj._material || !obj._mesh) {
+            continue;
+        }
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+        // frustum culling
+        int isCulled = false;
+        auto transform = obj.transform();
+        glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - camera.position();
+        float scaling = std::sqrt(std::pow(transform[0][0], 2.0) + std::pow(transform[0][1], 2.0) +
+                                  std::pow(transform[0][2], 2.0));
+        auto frustum = camera.build_frustum();
+        auto normals = std::vector<glm::vec3>{frustum._bottom_normal, frustum._left_normal,
+                                              frustum._near_normal, frustum._right_normal,
+                                              frustum._top_normal};
+        for (auto normal : normals) {
+            if (glm::dot(normal, center + normal * obj._mesh->boundingSphereRadius * scaling) < 0)
+                isCulled = true;
+        }
+        if (isCulled) continue;
+
+        obj._material->bind(true);
+        obj._material->set_uniform2(HASH("model"), obj.transform());
+        obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
+        obj._mesh->_index_buffer.bind(BufferUsage::Index);
+
+        // Vertex position
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+        // Vertex normal
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
+                              reinterpret_cast<void*>(3 * sizeof(float)));
+        // Vertex uv
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
+                              reinterpret_cast<void*>(6 * sizeof(float)));
+        // Tangent / bitangent sign
+        glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
+                              reinterpret_cast<void*>(8 * sizeof(float)));
+        // Vertex color
+        glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
+                              reinterpret_cast<void*>(12 * sizeof(float)));
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
+        glEnableVertexAttribArray(4);
+
+        // occlusion culling
+        glBeginQuery(GL_SAMPLES_PASSED, queryId);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glDepthMask(GL_FALSE);
+
+        glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()), GL_UNSIGNED_INT,
+                       nullptr);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
+
+        glEndQuery(GL_SAMPLES_PASSED);
+
+        int samplesPassed = 0;
+        glGetQueryObjectiv(queryId, GL_QUERY_RESULT, &samplesPassed);
+
+        if (samplesPassed == 0) {
+            continue;
+        } else {
+            glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()),
+                           GL_UNSIGNED_INT, nullptr);
+        }
+    }
+    glDeleteQueries(1, &queryId);
 }
 
 } // namespace OM3D

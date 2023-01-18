@@ -7,6 +7,7 @@ layout(location = 1) in vec3 in_normal;
 layout(location = 2) in vec2 in_uv;
 layout(location = 3) in vec4 in_tangent_bitangent_sign;
 layout(location = 4) in vec3 in_color;
+layout(location = 5) in mat4 model;
 
 layout(location = 0) out vec3 out_normal;
 layout(location = 1) out vec2 out_uv;
@@ -18,8 +19,6 @@ layout(location = 5) out vec3 out_bitangent;
 layout(binding = 0) uniform Data {
     FrameData frame;
 };
-
-uniform mat4 model;
 
 void main() {
     const vec4 position = model * vec4(in_pos, 1.0);

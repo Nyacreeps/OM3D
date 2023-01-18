@@ -43,8 +43,13 @@ class Material {
             _program->set_uniform(FWD(args)...);
         }
 
+        template<typename... Args>
+        void set_uniform2(Args&&... args) {
+            _program2->set_uniform(FWD(args)...);
+        }
 
-        void bind() const;
+
+        void bind(bool secondRenderMode = false) const;
 
         static std::shared_ptr<Material> empty_material();
         static Material textured_material();
@@ -53,6 +58,7 @@ class Material {
 
     private:
         std::shared_ptr<Program> _program;
+        std::shared_ptr<Program> _program2;
         std::vector<std::pair<u32, std::shared_ptr<Texture>>> _textures;
 
         BlendMode _blend_mode = BlendMode::None;

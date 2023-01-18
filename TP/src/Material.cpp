@@ -37,7 +37,7 @@ void Material::set_texture(u32 slot, std::shared_ptr<Texture> tex) {
     }
 }
 
-void Material::bind() const {
+void Material::bind(bool secondRenderMode) const {
     switch (_blend_mode) {
         case BlendMode::None:
             glDisable(GL_BLEND);
@@ -83,7 +83,7 @@ void Material::bind() const {
             break;
     }
 
-    switch(_depth_mask_mode) {
+    switch (_depth_mask_mode) {
         case DepthMaskMode::True:
             glDepthMask(GL_TRUE);
             break;
@@ -95,7 +95,10 @@ void Material::bind() const {
     for (const auto& texture : _textures) {
         texture.second->bind(texture.first);
     }
-    _program->bind();
+    if (!secondRenderMode)
+        _program->bind();
+    else
+        _program2->bind();
 }
 
 std::shared_ptr<Material> Material::empty_material() {
@@ -103,7 +106,8 @@ std::shared_ptr<Material> Material::empty_material() {
     auto material = weak_material.lock();
     if (!material) {
         material = std::make_shared<Material>();
-        material->_program = Program::from_files("prepass.frag", "basic.vert");
+        material->_program = Program::from_files("prepass.frag", "prepass_instanced.vert");
+        material->_program2 = Program::from_files("prepass.frag", "basic.vert");
         weak_material = material;
     }
     return material;
@@ -111,13 +115,17 @@ std::shared_ptr<Material> Material::empty_material() {
 
 Material Material::textured_material() {
     Material material;
-    material._program = Program::from_files("prepass.frag", "basic.vert", {"TEXTURED"});
+    material._program = Program::from_files("prepass.frag", "prepass_instanced.vert", {"TEXTURED"});
+    material._program2 = Program::from_files("prepass.frag", "basic.vert", {"TEXTURED"});
     return material;
 }
 
 Material Material::textured_normal_mapped_material() {
     Material material;
-    material._program = Program::from_files(
+    material._program =
+        Program::from_files("prepass.frag", "prepass_instanced.vert",
+                            std::array<std::string, 2>{"TEXTURED", "NORMAL_MAPPED"});
+    material._program2 = Program::from_files(
         "prepass.frag", "basic.vert", std::array<std::string, 2>{"TEXTURED", "NORMAL_MAPPED"});
     return material;
 }

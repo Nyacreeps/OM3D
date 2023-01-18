@@ -147,11 +147,12 @@ int main(int, char**) {
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
     auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
-    auto shading_program1 = Program::from_files("shading.frag", "screen.vert");
+    auto shading_program = Program::from_files("shading.frag", "screen.vert");
     auto shadingspheres_program =
         Program::from_files("shading_spheres.frag", "shading_spheres.vert");
     auto shadingdirectional_program =
         Program::from_files("shading_directional.frag", "screen.vert");
+    auto occlusionrend_program = Program::from_files("prepass.frag", "basic.vert");
 
     int debugMode = 0;
     int gBufferRenderMode = 0;
@@ -170,9 +171,13 @@ int main(int, char**) {
         }
 
         // Render the scene to the gbuffer
+        if (gBufferRenderMode == 0)
         {
             gBuffer.bind();
             scene_view.render();
+        } else {
+            gBuffer.bind();
+            scene_view.renderOcclusion();
         }
 
         if (debugMode == 1) {
@@ -199,7 +204,7 @@ int main(int, char**) {
                 scene_view.renderShadingDirectional(shadingdirectional_program);
                 scene_view.renderShadingSpheres(shadingspheres_program);
             } else {
-                scene_view.renderShading(shading_program1);
+                scene_view.renderShading(shading_program);
             }
             // Apply a tonemap in compute shader
             {
