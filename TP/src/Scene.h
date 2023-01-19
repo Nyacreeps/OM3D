@@ -29,6 +29,7 @@ class Scene : NonMovable {
 
         void add_object(SceneObject obj);
         void add_object(PointLight obj);
+        void sortObjects(const Camera &camera);
         
         std::vector<SceneObject> _objects;
 

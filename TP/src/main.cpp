@@ -199,6 +199,7 @@ int main(int, char**) {
         // Render the scene to the gbuffer
         if (gBufferRenderMode == 0) {
             gBuffer.bind();
+            scene->sortObjects(scene_view.camera());
             scene_view.render();
         } else {
             gBuffer.bind();

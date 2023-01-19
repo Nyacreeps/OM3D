@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <shader_structs.h>
+#include <algorithm>
 
 namespace OM3D {
 
@@ -21,6 +22,14 @@ void Scene::add_object(SceneObject obj) {
 
 void Scene::add_object(PointLight obj) {
     _point_lights.emplace_back(std::move(obj));
+}
+
+void Scene::sortObjects(const Camera& camera) {
+    std::sort(_objects.begin(), _objects.end(),
+              [&](const SceneObject& lhs, const SceneObject& rhs) {
+                  return lhs.distToCam(camera.position(), glm::normalize(camera.forward())) <
+                         rhs.distToCam(camera.position(), glm::normalize(camera.forward()));
+              });
 }
 
 void Scene::renderShading(const Camera& camera, std::shared_ptr<Program> programp) const {
@@ -227,8 +236,9 @@ void Scene::render(const Camera& camera) const {
         int isCulled = false;
         auto transform = obj.transform();
         glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - camera.position();
-        float scaling = std::sqrt(std::pow(transform[0][0], 2.0f) + std::pow(transform[0][1], 2.0f) +
-                                  std::pow(transform[0][2], 2.0f));
+        float scaling =
+            std::sqrt(std::pow(transform[0][0], 2.0f) + std::pow(transform[0][1], 2.0f) +
+                      std::pow(transform[0][2], 2.0f));
         auto frustum = camera.build_frustum();
         auto normals = std::vector<glm::vec3>{frustum._bottom_normal, frustum._left_normal,
                                               frustum._near_normal, frustum._right_normal,
@@ -322,10 +332,13 @@ void Scene::renderOcclusion(const Camera& camera) const {
     light_buffer.bind(BufferUsage::Storage, 1);
 
     // Render every object
+    int nbObjPassed = 0;
+    int nbLights = 0;
     GLuint queryId;
     glGenQueries(1, &queryId);
     for (const SceneObject& obj : _objects) {
         if (!obj._material || !obj._mesh) {
+            nbLights++;
             continue;
         }
 
@@ -333,8 +346,9 @@ void Scene::renderOcclusion(const Camera& camera) const {
         int isCulled = false;
         auto transform = obj.transform();
         glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - camera.position();
-        float scaling = std::sqrt(std::pow(transform[0][0], 2.0f) + std::pow(transform[0][1], 2.0f) +
-                                  std::pow(transform[0][2], 2.0f));
+        float scaling =
+            std::sqrt(std::pow(transform[0][0], 2.0f) + std::pow(transform[0][1], 2.0f) +
+                      std::pow(transform[0][2], 2.0f));
         auto frustum = camera.build_frustum();
         auto normals = std::vector<glm::vec3>{frustum._bottom_normal, frustum._left_normal,
                                               frustum._near_normal, frustum._right_normal,
@@ -344,8 +358,6 @@ void Scene::renderOcclusion(const Camera& camera) const {
                 isCulled = true;
         }
         if (isCulled) continue;
-
-        float dist = obj.distToCam(camera.position(), glm::normalize(camera.forward()));
 
         obj._material->bind(true);
         obj._material->set_uniform2(HASH("model"), obj.transform());
@@ -391,11 +403,13 @@ void Scene::renderOcclusion(const Camera& camera) const {
         if (samplesPassed == 0) {
             continue;
         } else {
+            nbObjPassed++;
             glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()),
                            GL_UNSIGNED_INT, nullptr);
         }
     }
     glDeleteQueries(1, &queryId);
+    std::cout << nbObjPassed << "/" << _objects.size() << " rendered\n";
 }
 
 } // namespace OM3D
