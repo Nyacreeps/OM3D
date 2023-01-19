@@ -29,9 +29,10 @@ class Scene : NonMovable {
 
         void add_object(SceneObject obj);
         void add_object(PointLight obj);
+        
+        std::vector<SceneObject> _objects;
 
     private:
-        std::vector<SceneObject> _objects;
         std::vector<PointLight> _point_lights;
         TypedBuffer<Instance> _instanceBuffer;
         glm::vec3 _sun_direction = glm::vec3(0.2f, 1.0f, 0.1f);

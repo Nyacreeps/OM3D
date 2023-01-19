@@ -55,6 +55,12 @@ void process_inputs(GLFWwindow* window, Camera& camera) {
         if (glfwGetKey(window, 'A') == GLFW_PRESS) {
             movement -= camera.right();
         }
+        if (glfwGetKey(window, ' ') == GLFW_PRESS) {
+            movement += camera.up();
+        }
+        if (glfwGetKey(window, 'C') == GLFW_PRESS) {
+            movement -= camera.up();
+        }
 
         float speed = 10.0f;
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
@@ -85,9 +91,29 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "cube.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
+    auto& object = scene->_objects[0];
+
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            for (int k = -1; k <= 1; k++) {
+                if (i == 0 && j == 0 && k == 0) continue;
+                auto obj1 = SceneObject(std::make_shared<StaticMesh>(StaticMesh::CubeMesh()),
+                                        Material::empty_material());
+                obj1.set_transform(
+                    glm::translate(object.transform(), {i * 4.0f, j * 4.0f, k * 4.0f}));
+                scene->add_object(std::move(obj1));
+            }
+        }
+    }
+
+    auto obj1 = SceneObject(std::make_shared<StaticMesh>(StaticMesh::CubeMesh()),
+                            Material::empty_material());
+    obj1.set_transform(glm::translate(glm::scale(object.transform(), glm::vec3(4.0f, 4.0f, 4.0f)),
+                                      {7.0f, 0.0f, 0.0f}));
+    scene->add_object(std::move(obj1));
 
     // Add lights
     {
@@ -171,8 +197,7 @@ int main(int, char**) {
         }
 
         // Render the scene to the gbuffer
-        if (gBufferRenderMode == 0)
-        {
+        if (gBufferRenderMode == 0) {
             gBuffer.bind();
             scene_view.render();
         } else {

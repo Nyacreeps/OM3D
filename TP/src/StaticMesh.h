@@ -24,11 +24,16 @@ class StaticMesh : NonCopyable {
         StaticMesh& operator=(StaticMesh&&) = default;
 
         StaticMesh(const MeshData& data);
+        static StaticMesh CubeMesh();
 
         void draw(const Frustum& frustum, const glm::mat4&, const glm::vec3 &posistion) const;
         TypedBuffer<Vertex> _vertex_buffer;
         TypedBuffer<u32> _index_buffer;
         float boundingSphereRadius;
+        float lengthX;
+        float lengthY;
+        float lengthZ;
+        MeshData _data;
 };
 
 }

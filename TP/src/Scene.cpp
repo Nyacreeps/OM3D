@@ -116,7 +116,7 @@ void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> 
     std::vector<LightInstance> instanceVertices;
     for (auto& pointLight : this->_point_lights) {
         glm::mat4 trans = glm::translate(glm::mat4(1.0), pointLight.position());
-        glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(pointLight.radius() * 0.1));
+        glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(pointLight.radius() * 0.1f));
         instanceVertices.push_back(
             {trans * scale, pointLight.position(), pointLight.color(), pointLight.radius()});
     }
@@ -227,8 +227,8 @@ void Scene::render(const Camera& camera) const {
         int isCulled = false;
         auto transform = obj.transform();
         glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - camera.position();
-        float scaling = std::sqrt(std::pow(transform[0][0], 2.0) + std::pow(transform[0][1], 2.0) +
-                                  std::pow(transform[0][2], 2.0));
+        float scaling = std::sqrt(std::pow(transform[0][0], 2.0f) + std::pow(transform[0][1], 2.0f) +
+                                  std::pow(transform[0][2], 2.0f));
         auto frustum = camera.build_frustum();
         auto normals = std::vector<glm::vec3>{frustum._bottom_normal, frustum._left_normal,
                                               frustum._near_normal, frustum._right_normal,
@@ -333,8 +333,8 @@ void Scene::renderOcclusion(const Camera& camera) const {
         int isCulled = false;
         auto transform = obj.transform();
         glm::vec3 center = glm::vec3(transform * glm::vec4(0.0, 0.0, 0.0, 1.0)) - camera.position();
-        float scaling = std::sqrt(std::pow(transform[0][0], 2.0) + std::pow(transform[0][1], 2.0) +
-                                  std::pow(transform[0][2], 2.0));
+        float scaling = std::sqrt(std::pow(transform[0][0], 2.0f) + std::pow(transform[0][1], 2.0f) +
+                                  std::pow(transform[0][2], 2.0f));
         auto frustum = camera.build_frustum();
         auto normals = std::vector<glm::vec3>{frustum._bottom_normal, frustum._left_normal,
                                               frustum._near_normal, frustum._right_normal,
@@ -344,6 +344,8 @@ void Scene::renderOcclusion(const Camera& camera) const {
                 isCulled = true;
         }
         if (isCulled) continue;
+
+        float dist = obj.distToCam(camera.position(), glm::normalize(camera.forward()));
 
         obj._material->bind(true);
         obj._material->set_uniform2(HASH("model"), obj.transform());
