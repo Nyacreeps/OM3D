@@ -1,5 +1,6 @@
 #include "SceneObject.h"
 
+#include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <limits>
 
@@ -7,6 +8,7 @@ namespace OM3D {
 
 SceneObject::SceneObject(std::shared_ptr<StaticMesh> mesh, std::shared_ptr<Material> material)
     : _mesh(mesh), _material(std::move(material)) {
+        glGenQueries(1, &_queryId);
 }
 
 void SceneObject::render(const Frustum& frustum, const glm::vec3& camPosition) const {

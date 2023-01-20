@@ -278,5 +278,6 @@ int main(int, char**) {
         glfwSwapBuffers(window);
     }
 
+    scene->deleteQueries();
     scene = nullptr; // destroy scene and child OpenGL objects
 }

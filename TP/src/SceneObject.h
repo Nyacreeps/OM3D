@@ -25,6 +25,8 @@ class SceneObject : NonCopyable {
 
         std::shared_ptr<StaticMesh> _mesh;
         std::shared_ptr<Material> _material;
+        uint _queryId;
+        bool mark = false;
 
     private:
         glm::mat4 _transform = glm::mat4(1.0f);

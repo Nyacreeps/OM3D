@@ -332,13 +332,10 @@ void Scene::renderOcclusion(const Camera& camera, bool debug) const {
     light_buffer.bind(BufferUsage::Storage, 1);
 
     // Render every object
-    int nbObjPassed = 0;
-    int nbLights = 0;
-    GLuint queryId;
-    glGenQueries(1, &queryId);
+    int a = 0;
     for (const SceneObject& obj : _objects) {
+        a++;
         if (!obj._material || !obj._mesh) {
-            nbLights++;
             continue;
         }
 
@@ -359,79 +356,14 @@ void Scene::renderOcclusion(const Camera& camera, bool debug) const {
         }
         if (isCulled) continue;
 
-        obj._material->bind(RenderMode::NON_INSTANCED);
-        obj._material->set_uniform(RenderMode::NON_INSTANCED, HASH("model"), obj.transform());
-        obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
-        obj._mesh->_index_buffer.bind(BufferUsage::Index);
-
-        // Vertex position
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
-        // Vertex normal
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
-                              reinterpret_cast<void*>(3 * sizeof(float)));
-        // Vertex uv
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
-                              reinterpret_cast<void*>(6 * sizeof(float)));
-        // Tangent / bitangent sign
-        glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
-                              reinterpret_cast<void*>(8 * sizeof(float)));
-        // Vertex color
-        glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
-                              reinterpret_cast<void*>(12 * sizeof(float)));
-
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-        glEnableVertexAttribArray(3);
-        glEnableVertexAttribArray(4);
-
         // occlusion culling
-        glBeginQuery(GL_SAMPLES_PASSED, queryId);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        glDepthMask(GL_FALSE);
-
-        glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()), GL_UNSIGNED_INT,
-                       nullptr);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glDepthMask(GL_TRUE);
-
-        glEndQuery(GL_SAMPLES_PASSED);
 
         int samplesPassed = 0;
-        glGetQueryObjectiv(queryId, GL_QUERY_RESULT, &samplesPassed);
+        glGetQueryObjectiv(obj._queryId, GL_QUERY_RESULT, &samplesPassed);
+        glBeginQuery(GL_SAMPLES_PASSED, obj._queryId);
 
-        if (samplesPassed == 0) {
-            if (!debug)
-                continue;
-            obj._material->bind(RenderMode::OCC_DEBUG);
-            obj._material->set_uniform(RenderMode::OCC_DEBUG, HASH("model"), obj.transform());
-            obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
-            obj._mesh->_index_buffer.bind(BufferUsage::Index);
-
-            // Vertex position
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
-            // Vertex normal
-            glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
-                                  reinterpret_cast<void*>(3 * sizeof(float)));
-            // Vertex uv
-            glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
-                                  reinterpret_cast<void*>(6 * sizeof(float)));
-            // Tangent / bitangent sign
-            glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
-                                  reinterpret_cast<void*>(8 * sizeof(float)));
-            // Vertex color
-            glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
-                                  reinterpret_cast<void*>(12 * sizeof(float)));
-
-            glEnableVertexAttribArray(0);
-            glEnableVertexAttribArray(1);
-            glEnableVertexAttribArray(2);
-            glEnableVertexAttribArray(3);
-            glEnableVertexAttribArray(4);
-            glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()),
-                           GL_UNSIGNED_INT, nullptr);
-        } else {
-            nbObjPassed++;
+        if (samplesPassed != 0) {
+            if (obj.mark) std::cout << "center cube visible\n";
             obj._material->bind(RenderMode::NON_INSTANCED);
             obj._material->set_uniform(RenderMode::NON_INSTANCED, HASH("model"), obj.transform());
             obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
@@ -459,9 +391,75 @@ void Scene::renderOcclusion(const Camera& camera, bool debug) const {
             glEnableVertexAttribArray(4);
             glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()),
                            GL_UNSIGNED_INT, nullptr);
+        } else if (samplesPassed == 0) {
+            if (obj.mark) std::cout << "center cube occluded\n";
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            glDepthMask(GL_FALSE);
+
+            obj._material->bind(RenderMode::NON_INSTANCED);
+            obj._material->set_uniform(RenderMode::NON_INSTANCED, HASH("model"), obj.transform());
+            obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
+            obj._mesh->_index_buffer.bind(BufferUsage::Index);
+
+            // Vertex position
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+            // Vertex normal
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(3 * sizeof(float)));
+            // Vertex uv
+            glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(6 * sizeof(float)));
+            // Tangent / bitangent sign
+            glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(8 * sizeof(float)));
+            // Vertex color
+            glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(12 * sizeof(float)));
+
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(3);
+            glEnableVertexAttribArray(4);
+            glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()),
+                           GL_UNSIGNED_INT, nullptr);
+
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glDepthMask(GL_TRUE);
+        }
+
+        glEndQuery(GL_SAMPLES_PASSED);
+
+        if (debug && samplesPassed == 0) {
+            obj._material->bind(RenderMode::OCC_DEBUG);
+            obj._material->set_uniform(RenderMode::OCC_DEBUG, HASH("model"), obj.transform());
+            obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
+            obj._mesh->_index_buffer.bind(BufferUsage::Index);
+
+            // Vertex position
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+            // Vertex normal
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(3 * sizeof(float)));
+            // Vertex uv
+            glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(6 * sizeof(float)));
+            // Tangent / bitangent sign
+            glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(8 * sizeof(float)));
+            // Vertex color
+            glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(12 * sizeof(float)));
+
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(3);
+            glEnableVertexAttribArray(4);
+            glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()),
+                           GL_UNSIGNED_INT, nullptr);
         }
     }
-    glDeleteQueries(1, &queryId);
 }
 
 } // namespace OM3D

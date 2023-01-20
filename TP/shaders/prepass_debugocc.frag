@@ -38,8 +38,4 @@ void main() {
 #endif
     gAlbedo = vec4(1.0, 0.0, 0.0, 1.0);
     gNormals = vec4((in_normal + vec3(1.0)) / 2.0, 1.0);
-
-#ifdef TEXTURED
-    gAlbedo *= texture(in_texture, in_uv);
-#endif
 }

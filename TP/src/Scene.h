@@ -5,6 +5,7 @@
 #include <PointLight.h>
 #include <Camera.h>
 
+#include <glad/glad.h>
 #include <vector>
 #include <memory>
 #include <TypedBuffer.h>
@@ -32,6 +33,11 @@ class Scene : NonMovable {
         void sortObjects(const Camera &camera);
         
         std::vector<SceneObject> _objects;
+        void deleteQueries() {
+            for (auto& obj : _objects) {
+                glDeleteQueries(1, &obj._queryId);
+            }
+        }
 
     private:
         std::vector<PointLight> _point_lights;
