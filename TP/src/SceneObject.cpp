@@ -6,10 +6,8 @@
 namespace OM3D {
 
 SceneObject::SceneObject(std::shared_ptr<StaticMesh> mesh, std::shared_ptr<Material> material)
-    : _mesh(std::move(mesh)), _material(std::move(material)) {
+    : _mesh(mesh), _material(std::move(material)) {
 }
-
-
 
 void SceneObject::render(const Frustum& frustum, const glm::vec3& camPosition) const {
     if (!_material || !_mesh) {

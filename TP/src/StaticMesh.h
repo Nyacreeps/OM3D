@@ -16,7 +16,7 @@ struct MeshData {
     std::vector<u32> indices;
 };
 
-class StaticMesh : NonCopyable {
+class StaticMesh {
 
     public:
         StaticMesh() = default;
@@ -34,6 +34,7 @@ class StaticMesh : NonCopyable {
         float lengthY;
         float lengthZ;
         MeshData _data;
+        StaticMesh getBoxMesh();
 };
 
 }

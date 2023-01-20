@@ -26,8 +26,6 @@ class SceneObject : NonCopyable {
         std::shared_ptr<StaticMesh> _mesh;
         std::shared_ptr<Material> _material;
 
-        SceneObject Cube();
-
     private:
         glm::mat4 _transform = glm::mat4(1.0f);
 };
