@@ -16,8 +16,8 @@ void SceneObject::render(const Frustum& frustum, const glm::vec3& camPosition) c
         return;
     }
 
-    _material->set_uniform(HASH("model"), transform());
-    _material->bind();
+    _material->set_uniform(RenderMode::INSTANCED, HASH("model"), transform());
+    _material->bind(RenderMode::INSTANCED);
     _mesh->draw(frustum, _transform, camPosition);
 }
 

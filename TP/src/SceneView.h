@@ -17,7 +17,7 @@ class SceneView {
         void renderShadingSpheres(std::shared_ptr<Program> programp) const;
         void renderShadingDirectional(std::shared_ptr<Program> programp) const;
         void render() const;
-        void renderOcclusion() const;
+        void renderOcclusion(bool debug) const;
 
     private:
         const Scene* _scene = nullptr;

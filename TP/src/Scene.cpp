@@ -61,7 +61,7 @@ void Scene::renderShading(const Camera& camera, std::shared_ptr<Program> program
     mat.set_depth_test_mode(DepthTestMode::None);
     mat.set_depth_mask_mode(DepthMaskMode::False);
     mat.set_program(programp);
-    mat.bind();
+    mat.bind(RenderMode::INSTANCED);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
@@ -99,7 +99,7 @@ void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> 
     mat.set_depth_test_mode(DepthTestMode::Reversed);
     mat.set_depth_mask_mode(DepthMaskMode::False);
     mat.set_program(programp);
-    mat.bind();
+    mat.bind(RenderMode::INSTANCED);
 
     // Vertex position
     glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
@@ -194,7 +194,7 @@ void Scene::renderShadingDirectional(const Camera& camera,
     mat.set_depth_test_mode(DepthTestMode::None);
     mat.set_depth_mask_mode(DepthMaskMode::False);
     mat.set_program(programp);
-    mat.bind();
+    mat.bind(RenderMode::INSTANCED);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
@@ -255,7 +255,7 @@ void Scene::render(const Camera& camera) const {
 
     for (auto& [key, value] : instanceGroups) {
         if (!value.mat || !value.mesh) continue;
-        value.mat->bind();
+        value.mat->bind(RenderMode::INSTANCED);
         TypedBuffer<Instance> instanceBuffer(value.instanceVertices);
 
         value.mesh->_vertex_buffer.bind(BufferUsage::Attribute);
@@ -307,7 +307,7 @@ void Scene::render(const Camera& camera) const {
     }
 }
 
-void Scene::renderOcclusion(const Camera& camera) const {
+void Scene::renderOcclusion(const Camera& camera, bool debug) const {
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
     {
@@ -359,8 +359,8 @@ void Scene::renderOcclusion(const Camera& camera) const {
         }
         if (isCulled) continue;
 
-        obj._material->bind(true);
-        obj._material->set_uniform2(HASH("model"), obj.transform());
+        obj._material->bind(RenderMode::NON_INSTANCED);
+        obj._material->set_uniform(RenderMode::NON_INSTANCED, HASH("model"), obj.transform());
         obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
         obj._mesh->_index_buffer.bind(BufferUsage::Index);
 
@@ -401,15 +401,67 @@ void Scene::renderOcclusion(const Camera& camera) const {
         glGetQueryObjectiv(queryId, GL_QUERY_RESULT, &samplesPassed);
 
         if (samplesPassed == 0) {
-            continue;
+            if (!debug)
+                continue;
+            obj._material->bind(RenderMode::OCC_DEBUG);
+            obj._material->set_uniform(RenderMode::OCC_DEBUG, HASH("model"), obj.transform());
+            obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
+            obj._mesh->_index_buffer.bind(BufferUsage::Index);
+
+            // Vertex position
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+            // Vertex normal
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(3 * sizeof(float)));
+            // Vertex uv
+            glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(6 * sizeof(float)));
+            // Tangent / bitangent sign
+            glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(8 * sizeof(float)));
+            // Vertex color
+            glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(12 * sizeof(float)));
+
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(3);
+            glEnableVertexAttribArray(4);
+            glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()),
+                           GL_UNSIGNED_INT, nullptr);
         } else {
             nbObjPassed++;
+            obj._material->bind(RenderMode::NON_INSTANCED);
+            obj._material->set_uniform(RenderMode::NON_INSTANCED, HASH("model"), obj.transform());
+            obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
+            obj._mesh->_index_buffer.bind(BufferUsage::Index);
+
+            // Vertex position
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+            // Vertex normal
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(3 * sizeof(float)));
+            // Vertex uv
+            glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(6 * sizeof(float)));
+            // Tangent / bitangent sign
+            glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(8 * sizeof(float)));
+            // Vertex color
+            glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
+                                  reinterpret_cast<void*>(12 * sizeof(float)));
+
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(3);
+            glEnableVertexAttribArray(4);
             glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()),
                            GL_UNSIGNED_INT, nullptr);
         }
     }
     glDeleteQueries(1, &queryId);
-    std::cout << nbObjPassed << "/" << _objects.size() << " rendered\n";
 }
 
 } // namespace OM3D

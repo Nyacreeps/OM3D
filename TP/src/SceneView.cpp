@@ -37,9 +37,9 @@ void SceneView::render() const {
     }
 }
 
-void SceneView::renderOcclusion() const {
+void SceneView::renderOcclusion(bool debug) const {
     if(_scene) {
-        _scene->renderOcclusion(_camera);
+        _scene->renderOcclusion(_camera, debug);
     }
 }
 

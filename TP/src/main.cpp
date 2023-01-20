@@ -180,7 +180,8 @@ int main(int, char**) {
         Program::from_files("shading_directional.frag", "screen.vert");
     auto occlusionrend_program = Program::from_files("prepass.frag", "basic.vert");
 
-    int debugMode = 0;
+    int gDebugMode = 0;
+    int occDebugMode = 0;
     int gBufferRenderMode = 0;
     bool renderSpheres = false;
 
@@ -199,24 +200,24 @@ int main(int, char**) {
         // Render the scene to the gbuffer
         if (gBufferRenderMode == 0) {
             gBuffer.bind();
-            scene->sortObjects(scene_view.camera());
             scene_view.render();
         } else {
             gBuffer.bind();
-            scene_view.renderOcclusion();
+            scene->sortObjects(scene_view.camera());
+            scene_view.renderOcclusion(occDebugMode);
         }
 
-        if (debugMode == 1) {
+        if (gDebugMode == 1) {
             gdebug_program1->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             albedo.bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-        } else if (debugMode == 2) {
+        } else if (gDebugMode == 2) {
             gdebug_program1->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             normals.bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-        } else if (debugMode == 3) {
+        } else if (gDebugMode == 3) {
             gdebug_program2->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             depth.bind(0);
@@ -259,13 +260,18 @@ int main(int, char**) {
                     scene_view = SceneView(scene.get());
                 }
             }
+            ImGui::Text("Prepass");
             ImGui::RadioButton("Classic prepass", &gBufferRenderMode, 0);
             ImGui::RadioButton("Occlusion culling prepass", &gBufferRenderMode, 1);
-            ImGui::RadioButton("Normal display", &debugMode, 0);
-            ImGui::RadioButton("Display Gbuffer albedo", &debugMode, 1);
-            ImGui::RadioButton("Display Gbuffer normals", &debugMode, 2);
-            ImGui::RadioButton("Display Gbuffer depth", &debugMode, 3);
+            ImGui::Text("Display mode");
+            ImGui::RadioButton("Normal display", &gDebugMode, 0);
+            ImGui::RadioButton("Display Gbuffer albedo", &gDebugMode, 1);
+            ImGui::RadioButton("Display Gbuffer normals", &gDebugMode, 2);
+            ImGui::RadioButton("Display Gbuffer depth", &gDebugMode, 3);
             ImGui::Checkbox("Switch to volume based deferred shading", &renderSpheres);
+            ImGui::Text("Occlusion");
+            ImGui::RadioButton("Normal occlusion", &occDebugMode, 0);
+            ImGui::RadioButton("Display occludees in red", &occDebugMode, 1);
         }
         imgui.finish();
 
