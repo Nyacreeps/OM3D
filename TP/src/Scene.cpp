@@ -181,15 +181,7 @@ void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> 
 void Scene::renderShadingDirectional(const Camera& camera,
                                      std::shared_ptr<Program> programp) const {
     // Fill and bind frame data buffer
-    TypedBuffer<shader::FrameData> buffer(nullptr, 1);
-    {
-        auto mapping = buffer.map(AccessType::WriteOnly);
-        mapping[0].camera.view_proj = camera.view_proj_matrix();
-        mapping[0].point_light_count = u32(_point_lights.size());
-        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
-        mapping[0].sun_dir = glm::normalize(_sun_direction);
-    }
-    buffer.bind(BufferUsage::Uniform, 0);
+    auto buffer = fill_and_bind_frame_data_buffer(camera, _point_lights, _sun_direction);
 
     // Fill and bind lights buffer
     TypedBuffer<shader::PointLight> light_buffer(nullptr,

@@ -199,6 +199,7 @@ int main(int, char**) {
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
     auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
     auto shading_program = Program::from_files("shading.frag", "screen.vert");
+
     auto taa_program = Program::from_files("taa.frag", "screen.vert");
     auto shadingspheres_program =
         Program::from_files("shading_spheres.frag", "shading_spheres.vert");
@@ -224,6 +225,7 @@ int main(int, char**) {
             taaBuffer.replace_texture(1, &color_history[history_current]);
             taaBuffer.replace_depth_texture(&depth_history[history_current]);
             gBuffer.replace_depth_texture(&depth_history[history_current]);
+            mainFrameBuffer.replace_depth_texture(&depth_history[history_current]);
             auto& camera = scene_view.camera();
             camera.new_frame();
             camera.set_jitter(jitter_sequence[frame_counter % JITTER_POINTS]);
@@ -323,13 +325,11 @@ int main(int, char**) {
             ImGui::RadioButton("Display Gbuffer normals", &gDebugMode, 2);
             ImGui::RadioButton("Display Gbuffer depth", &gDebugMode, 3);
             ImGui::Checkbox("Switch to volume based deferred shading", &renderSpheres);
-<<<<<<< HEAD
             ImGui::Text("Occlusion");
             ImGui::RadioButton("Normal occlusion", &occDebugMode, 0);
             ImGui::RadioButton("Display occludees in red", &occDebugMode, 1);
-=======
+            ImGui::Text("TAA");
             ImGui::Checkbox("Enable TAA", &taa_enabled);
->>>>>>> caf1023 (feat: Added 'Enable TAA' checkbox)
         }
         imgui.finish();
 

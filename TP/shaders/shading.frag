@@ -8,9 +8,6 @@ layout(location = 1) out vec4 out_history;
 layout(binding = 0) uniform sampler2D in_albedo;
 layout(binding = 1) uniform sampler2D in_normal;
 layout(binding = 2) uniform sampler2D in_depth;
-layout(binding = 3) uniform sampler2D in_velocity;
-layout(binding = 4) uniform sampler2D in_color_history;
-layout(binding = 5) uniform sampler2D in_depth_history;
 
 layout(binding = 0) uniform Data {
     FrameData frame;
