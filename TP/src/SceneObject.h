@@ -26,6 +26,7 @@ class SceneObject : NonCopyable {
         std::shared_ptr<StaticMesh> _mesh;
         std::shared_ptr<Material> _material;
         uint _queryId;
+        bool _queryActive;
         bool mark = false;
 
     private:

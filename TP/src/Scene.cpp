@@ -307,7 +307,7 @@ void Scene::render(const Camera& camera) const {
     }
 }
 
-void Scene::renderOcclusion(const Camera& camera, bool debug) const {
+void Scene::renderOcclusion(const Camera& camera, bool debug) {
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
     {
@@ -333,7 +333,7 @@ void Scene::renderOcclusion(const Camera& camera, bool debug) const {
 
     // Render every object
     int a = 0;
-    for (const SceneObject& obj : _objects) {
+    for (SceneObject& obj : _objects) {
         a++;
         if (!obj._material || !obj._mesh) {
             continue;
@@ -359,9 +359,14 @@ void Scene::renderOcclusion(const Camera& camera, bool debug) const {
         // occlusion culling
 
         int samplesPassed = 0;
-        glGetQueryObjectiv(obj._queryId, GL_QUERY_RESULT, &samplesPassed);
+        int resultAvailable = 0;
+        if (obj._queryActive) {
+            glGetQueryObjectiv(obj._queryId, GL_QUERY_RESULT_AVAILABLE, &resultAvailable);
+            if (resultAvailable)
+                glGetQueryObjectiv(obj._queryId, GL_QUERY_RESULT, &samplesPassed);
+        }
         glBeginQuery(GL_SAMPLES_PASSED, obj._queryId);
-
+        obj._queryActive = true;
         if (samplesPassed != 0) {
             if (obj.mark) std::cout << "center cube visible\n";
             obj._material->bind(RenderMode::NON_INSTANCED);

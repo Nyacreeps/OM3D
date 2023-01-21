@@ -2,7 +2,7 @@
 
 namespace OM3D {
 
-SceneView::SceneView(const Scene* scene) : _scene(scene) {
+SceneView::SceneView(Scene* scene) : _scene(scene) {
 }
 
 Camera& SceneView::camera() {
@@ -37,7 +37,7 @@ void SceneView::render() const {
     }
 }
 
-void SceneView::renderOcclusion(bool debug) const {
+void SceneView::renderOcclusion(bool debug) {
     if(_scene) {
         _scene->renderOcclusion(_camera, debug);
     }
