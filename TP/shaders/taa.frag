@@ -156,26 +156,7 @@ vec4 TAA_pixel_color() {
 }
 
 void main() {
-
     vec4 new_color = TAA_pixel_color();
     out_color = new_color;
     out_color_history = new_color;
-
-
-
-
-    // ivec2 pixelPosition = ivec2(gl_FragCoord.xy);
-    // vec4 color = texelFetch(in_color, pixelPosition, 0);
-    // vec2 velocity = texelFetch(in_velocity, pixelPosition, 0).rg;
-
-    // ivec2 oldPixelPosition = ivec2(gl_FragCoord.xy - velocity);
-    // vec4 history_color = texelFetch(in_color_history, pixelPosition, 0);
-    // float history_depth = texelFetch(in_depth_history, pixelPosition, 0).r;
-    // // TODO
-
-    // color = mix(history_color, color, HISTORY_MIX_FACTOR);
-
-    // out_color = color;
-    // out_color_history = color;
-    // // out_depth_history = gl_FragCoord.z;
 }
