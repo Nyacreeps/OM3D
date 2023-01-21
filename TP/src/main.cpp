@@ -164,9 +164,17 @@ int main(int, char**) {
     glfwSwapInterval(1); // Enable vsync
     init_graphics();
 
+    // TAA
     size_t frame_counter = 0;
     constexpr bool TAA_ENABLED = true;
     auto jitter_sequence = init_jitter(window_size);
+
+    constexpr size_t HISTORY_SIZE = 2;
+    Texture history[HISTORY_SIZE] = {
+        Texture(window_size, ImageFormat::RGBA16_FLOAT),
+        Texture(window_size, ImageFormat::RGBA16_FLOAT),
+    };
+    bool history_current = 0;
 
     ImGuiRenderer imgui(window);
 
@@ -182,7 +190,7 @@ int main(int, char**) {
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
     Texture velocity(window_size, ImageFormat::RG16_FLOAT);
     Framebuffer gBuffer(&depth, std::array{&albedo, &normals, &velocity});
-    Framebuffer mainFrameBuffer(&depth, std::array{&lit});
+    Framebuffer mainFrameBuffer(&depth, std::array{&lit, &history[0]});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
     auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
@@ -205,7 +213,10 @@ int main(int, char**) {
         }
 
         update_delta_time();
+
         if constexpr (TAA_ENABLED) {
+            history_current = !history_current;
+            mainFrameBuffer.replace_texture(1, &history[history_current]);
             auto& camera = scene_view.camera();
             camera.new_frame();
             camera.set_jitter(jitter_sequence[frame_counter % JITTER_POINTS]);
@@ -249,6 +260,8 @@ int main(int, char**) {
             albedo.bind(0);
             normals.bind(1);
             depth.bind(2);
+            velocity.bind(3);
+            history[!history_current].bind(4);
             if (renderSpheres) {
                 scene_view.renderShadingDirectional(shadingdirectional_program);
                 scene_view.renderShadingSpheres(shadingspheres_program);
