@@ -7,9 +7,9 @@ Yorick Madelain, Ancelin Bouchet
 * TAA : need moving object to be verified
   1. [x] Implement Halton (2,3) 2D sequence (length 16) for jitter
   2. [x] Make rendering fill velocity buffer (during g-buffer pass)
-     - it may be all wrong :(
-  3. [ ] History buffer
+  3. [x] History buffer
   4. [ ] Blend between frames
   5. [ ] Add jitter
-  6. [ ] ???
-  7. [ ] Profit
+  6. [ ] Ensure moving objects have no ghosting
+  7. [ ] ???
+  8. [ ] Profit
