@@ -80,6 +80,8 @@ float max3(float a, float b, float c) {
     return max(max(a, b), c);
 }
 
+// A lot taken from: https://alextardif.com/TAA.html
+// Seems like a decent resource
 vec4 TAA_pixel_color() {
     vec3 neighbourhood_max = vec3(-99999);
     vec3 neighbourhood_min = vec3(99999);

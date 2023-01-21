@@ -166,7 +166,7 @@ int main(int, char**) {
 
     // TAA
     size_t frame_counter = 0;
-    constexpr bool TAA_ENABLED = true;
+    bool taa_enabled = true;
     auto jitter_sequence = init_jitter(window_size);
 
     constexpr size_t HISTORY_SIZE = 2;
@@ -219,7 +219,7 @@ int main(int, char**) {
 
         update_delta_time();
 
-        if constexpr (TAA_ENABLED) {
+        if (taa_enabled) {
             history_current = !history_current;
             taaBuffer.replace_texture(1, &color_history[history_current]);
             taaBuffer.replace_depth_texture(&depth_history[history_current]);
@@ -227,6 +227,9 @@ int main(int, char**) {
             auto& camera = scene_view.camera();
             camera.new_frame();
             camera.set_jitter(jitter_sequence[frame_counter % JITTER_POINTS]);
+        } else {
+            auto& camera = scene_view.camera();
+            camera.set_jitter(glm::vec2(0));
         }
 
         if (const auto& io = ImGui::GetIO(); !io.WantCaptureMouse && !io.WantCaptureKeyboard) {
@@ -274,7 +277,7 @@ int main(int, char**) {
                 scene_view.renderShading(shading_program);
             }
 
-            if constexpr (TAA_ENABLED) {
+            if (taa_enabled) {
                 taaBuffer.bind(false, false);
                 lit.bind(0);
                 velocity.bind(1);
@@ -320,9 +323,13 @@ int main(int, char**) {
             ImGui::RadioButton("Display Gbuffer normals", &gDebugMode, 2);
             ImGui::RadioButton("Display Gbuffer depth", &gDebugMode, 3);
             ImGui::Checkbox("Switch to volume based deferred shading", &renderSpheres);
+<<<<<<< HEAD
             ImGui::Text("Occlusion");
             ImGui::RadioButton("Normal occlusion", &occDebugMode, 0);
             ImGui::RadioButton("Display occludees in red", &occDebugMode, 1);
+=======
+            ImGui::Checkbox("Enable TAA", &taa_enabled);
+>>>>>>> caf1023 (feat: Added 'Enable TAA' checkbox)
         }
         imgui.finish();
 
