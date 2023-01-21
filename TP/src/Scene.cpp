@@ -43,17 +43,28 @@ void Scene::moveObjects(double time, std::function<glm::vec3(double)> func) {
     }
 }
 
-void Scene::renderShading(const Camera& camera, std::shared_ptr<Program> programp) const {
+static inline TypedBuffer<shader::FrameData> fill_and_bind_frame_data_buffer(
+    const Camera& camera, const std::vector<PointLight>& point_lights,
+    const glm::vec3& sun_direction) {
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
     {
         auto mapping = buffer.map(AccessType::WriteOnly);
         mapping[0].camera.view_proj = camera.view_proj_matrix();
-        mapping[0].point_light_count = u32(_point_lights.size());
+        mapping[0].camera.prev_view_proj = camera.prev_view_proj_matrix();
+        mapping[0].camera.jitter = camera.jitter_vector();
+        mapping[0].camera.prev_jitter = camera.prev_jitter_vector();
+        mapping[0].point_light_count = u32(point_lights.size());
         mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
-        mapping[0].sun_dir = glm::normalize(_sun_direction);
+        mapping[0].sun_dir = glm::normalize(sun_direction);
     }
     buffer.bind(BufferUsage::Uniform, 0);
+    return buffer;
+}
+
+void Scene::renderShading(const Camera& camera, std::shared_ptr<Program> programp) const {
+    // Fill and bind frame data buffer
+    auto buffer = fill_and_bind_frame_data_buffer(camera, _point_lights, _sun_direction);
 
     // Fill and bind lights buffer
     TypedBuffer<shader::PointLight> light_buffer(nullptr,
@@ -79,15 +90,7 @@ void Scene::renderShading(const Camera& camera, std::shared_ptr<Program> program
 
 void Scene::renderShadingSpheres(const Camera& camera, std::shared_ptr<Program> programp) const {
     // Fill and bind frame data buffer
-    TypedBuffer<shader::FrameData> buffer(nullptr, 1);
-    {
-        auto mapping = buffer.map(AccessType::WriteOnly);
-        mapping[0].camera.view_proj = camera.view_proj_matrix();
-        mapping[0].point_light_count = u32(_point_lights.size());
-        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
-        mapping[0].sun_dir = glm::normalize(_sun_direction);
-    }
-    buffer.bind(BufferUsage::Uniform, 0);
+    auto buffer = fill_and_bind_frame_data_buffer(camera, _point_lights, _sun_direction);
 
     // Fill and bind lights buffer
     TypedBuffer<shader::PointLight> light_buffer(nullptr,
@@ -212,15 +215,7 @@ void Scene::renderShadingDirectional(const Camera& camera,
 
 void Scene::render(const Camera& camera) const {
     // Fill and bind frame data buffer
-    TypedBuffer<shader::FrameData> buffer(nullptr, 1);
-    {
-        auto mapping = buffer.map(AccessType::WriteOnly);
-        mapping[0].camera.view_proj = camera.view_proj_matrix();
-        mapping[0].point_light_count = u32(_point_lights.size());
-        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
-        mapping[0].sun_dir = glm::normalize(_sun_direction);
-    }
-    buffer.bind(BufferUsage::Uniform, 0);
+    auto buffer = fill_and_bind_frame_data_buffer(camera, _point_lights, _sun_direction);
 
     // Fill and bind lights buffer
     TypedBuffer<shader::PointLight> light_buffer(nullptr,
@@ -320,15 +315,7 @@ void Scene::render(const Camera& camera) const {
 
 void Scene::renderOcclusion(const Camera& camera, bool debug) {
     // Fill and bind frame data buffer
-    TypedBuffer<shader::FrameData> buffer(nullptr, 1);
-    {
-        auto mapping = buffer.map(AccessType::WriteOnly);
-        mapping[0].camera.view_proj = camera.view_proj_matrix();
-        mapping[0].point_light_count = u32(_point_lights.size());
-        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
-        mapping[0].sun_dir = glm::normalize(_sun_direction);
-    }
-    buffer.bind(BufferUsage::Uniform, 0);
+    auto buffer = fill_and_bind_frame_data_buffer(camera, _point_lights, _sun_direction);
 
     // Fill and bind lights buffer
     TypedBuffer<shader::PointLight> light_buffer(nullptr,

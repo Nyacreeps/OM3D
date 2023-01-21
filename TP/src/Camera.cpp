@@ -51,6 +51,11 @@ void Camera::set_jitter(const glm::vec2& vec) {
     update();
 }
 
+void Camera::new_frame() {
+    _prev_view_proj = _view_proj;
+    _prev_jitter = _jitter;
+}
+
 glm::vec3 Camera::position() const {
     return extract_position(_view);
 }
@@ -77,6 +82,18 @@ const glm::mat4& Camera::view_matrix() const {
 
 const glm::mat4& Camera::view_proj_matrix() const {
     return _view_proj;
+}
+
+const glm::mat4& Camera::prev_view_proj_matrix() const{
+    return _prev_view_proj;
+}
+
+const glm::vec2& Camera::jitter_vector() const {
+    return _jitter;
+}
+
+const glm::vec2& Camera::prev_jitter_vector() const {
+    return _prev_jitter;
 }
 
 void Camera::update() {

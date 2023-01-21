@@ -165,7 +165,7 @@ int main(int, char**) {
     init_graphics();
 
     size_t frame_counter = 0;
-    constexpr bool JITTER_ENABLED = true;
+    constexpr bool TAA_ENABLED = true;
     auto jitter_sequence = init_jitter(window_size);
 
     ImGuiRenderer imgui(window);
@@ -180,7 +180,8 @@ int main(int, char**) {
     Texture normals(window_size, ImageFormat::RGBA8_UNORM);
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
-    Framebuffer gBuffer(&depth, std::array{&albedo, &normals});
+    Texture velocity(window_size, ImageFormat::RG16_FLOAT);
+    Framebuffer gBuffer(&depth, std::array{&albedo, &normals, &velocity});
     Framebuffer mainFrameBuffer(&depth, std::array{&lit});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
@@ -209,8 +210,10 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
-        if constexpr (JITTER_ENABLED) {
-            scene_view.camera().set_jitter(jitter_sequence[frame_counter % JITTER_POINTS]);
+        if constexpr (TAA_ENABLED) {
+            auto& camera = scene_view.camera();
+            camera.new_frame();
+            camera.set_jitter(jitter_sequence[frame_counter % JITTER_POINTS]);
         }
 
         // Render the scene to the gbuffer
@@ -220,6 +223,7 @@ int main(int, char**) {
         scene->sortObjects(scene_view.camera());
         if (gBufferRenderMode == 0) {
             gBuffer.bind();
+            velocity.clear_with(0.0f, 0.0f);
             scene_view.render();
         } else {
             gBuffer.bind();

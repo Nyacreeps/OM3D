@@ -37,6 +37,9 @@ class Texture {
 
         const glm::uvec2& size() const;
 
+        void clear_with(float r, float g, float b, float a);
+        void clear_with(float r, float g);
+
         static u32 mip_levels(glm::uvec2 size);
 
     private:
