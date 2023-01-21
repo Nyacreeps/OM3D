@@ -274,13 +274,15 @@ int main(int, char**) {
                 scene_view.renderShading(shading_program);
             }
 
-            taaBuffer.bind(false, false);
-            lit.bind(0);
-            velocity.bind(1);
-            depth_history[history_current].bind(2);
-            color_history[!history_current].bind(3);
-            depth_history[!history_current].bind(4);
-            scene_view.renderTAA(taa_program);
+            if constexpr (TAA_ENABLED) {
+                taaBuffer.bind(false, false);
+                lit.bind(0);
+                velocity.bind(1);
+                depth_history[history_current].bind(2);
+                color_history[!history_current].bind(3);
+                depth_history[!history_current].bind(4);
+                scene_view.renderTAA(taa_program);
+            }
 
             // Apply a tonemap in compute shader
             {
