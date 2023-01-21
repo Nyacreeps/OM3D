@@ -25,6 +25,7 @@ class Framebuffer : NonCopyable {
         void bind(bool clear = true, bool clearDepth = true) const;
         void blit(bool depth = false) const;
         void replace_texture(int number, const Texture* new_texture);
+        void replace_depth_texture(const Texture* new_texture) ;
 
         const glm::uvec2& size() const;
 

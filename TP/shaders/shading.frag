@@ -9,7 +9,8 @@ layout(binding = 0) uniform sampler2D in_albedo;
 layout(binding = 1) uniform sampler2D in_normal;
 layout(binding = 2) uniform sampler2D in_depth;
 layout(binding = 3) uniform sampler2D in_velocity;
-layout(binding = 4) uniform sampler2D in_history;
+layout(binding = 4) uniform sampler2D in_color_history;
+layout(binding = 5) uniform sampler2D in_depth_history;
 
 layout(binding = 0) uniform Data {
     FrameData frame;
@@ -28,8 +29,6 @@ vec3 unproject(vec2 uv, float depth, mat4 inv_viewproj) {
 }
 
 void main() {
-    vec3 _temp = texelFetch(in_velocity, ivec2(gl_FragCoord.xy), 0).rgb;
-    vec3 _temp2 = texelFetch(in_history, ivec2(gl_FragCoord.xy), 0).rgb;
     vec3 albedo = texelFetch(in_albedo, ivec2(gl_FragCoord.xy), 0).rgb;
     vec3 normal = texelFetch(in_normal, ivec2(gl_FragCoord.xy), 0).rgb;
     normal = normal * 2.0 - vec3(1.0);
