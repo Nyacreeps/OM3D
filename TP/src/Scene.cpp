@@ -377,9 +377,7 @@ void Scene::renderOcclusion(const Camera& camera, bool debug) {
         int samplesPassed = 0;
         int resultAvailable = 0;
         if (obj._queryActive) {
-            glGetQueryObjectiv(obj._queryId, GL_QUERY_RESULT_AVAILABLE, &resultAvailable);
-            if (resultAvailable)
-                glGetQueryObjectiv(obj._queryId, GL_QUERY_RESULT, &samplesPassed);
+            glGetQueryObjectiv(obj._queryId, GL_QUERY_RESULT, &samplesPassed);
         }
         glBeginQuery(GL_SAMPLES_PASSED, obj._queryId);
         obj._queryActive = true;
