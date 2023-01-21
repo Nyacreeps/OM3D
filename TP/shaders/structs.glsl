@@ -22,3 +22,7 @@ struct PointLight {
     float padding_1;
 };
 
+struct TAASettings {
+    uvec2 window_size;
+    uvec2 padding_1;
+};

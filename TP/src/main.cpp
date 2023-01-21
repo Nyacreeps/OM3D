@@ -187,18 +187,19 @@ int main(int, char**) {
 
     auto tonemap_program = Program::from_file("tonemap.comp");
 
-    Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     Texture albedo(window_size, ImageFormat::RGBA8_sRGB);
     Texture normals(window_size, ImageFormat::RGBA8_UNORM);
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
     Texture velocity(window_size, ImageFormat::RG16_FLOAT);
-    Framebuffer gBuffer(&depth, std::array{&albedo, &normals, &velocity});
-    Framebuffer mainFrameBuffer(&depth, std::array{&lit, &color_history[0]});
+    Framebuffer gBuffer(&depth_history[0], std::array{&albedo, &normals, &velocity});
+    Framebuffer mainFrameBuffer(&depth_history[0], std::array{&lit});
+    Framebuffer taaBuffer(&depth_history[0], std::array{&lit, &color_history[0]});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
     auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
     auto shading_program = Program::from_files("shading.frag", "screen.vert");
+    auto taa_program = Program::from_files("taa.frag", "screen.vert");
     auto shadingspheres_program =
         Program::from_files("shading_spheres.frag", "shading_spheres.vert");
     auto shadingdirectional_program =
@@ -220,8 +221,8 @@ int main(int, char**) {
 
         if constexpr (TAA_ENABLED) {
             history_current = !history_current;
-            mainFrameBuffer.replace_texture(1, &color_history[history_current]);
-            mainFrameBuffer.replace_depth_texture(&depth_history[history_current]);
+            taaBuffer.replace_texture(1, &color_history[history_current]);
+            taaBuffer.replace_depth_texture(&depth_history[history_current]);
             gBuffer.replace_depth_texture(&depth_history[history_current]);
             auto& camera = scene_view.camera();
             camera.new_frame();
@@ -259,22 +260,28 @@ int main(int, char**) {
         } else if (gDebugMode == 3) {
             gdebug_program2->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            depth.bind(0);
+            depth_history[history_current].bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
         } else {
             mainFrameBuffer.bind(true, false);
             albedo.bind(0);
             normals.bind(1);
-            depth.bind(2);
-            velocity.bind(3);
-            color_history[!history_current].bind(4);
-            depth_history[!history_current].bind(5);
+            depth_history[history_current].bind(2);
             if (renderSpheres) {
                 scene_view.renderShadingDirectional(shadingdirectional_program);
                 scene_view.renderShadingSpheres(shadingspheres_program);
             } else {
                 scene_view.renderShading(shading_program);
             }
+
+            taaBuffer.bind(false, false);
+            lit.bind(0);
+            velocity.bind(1);
+            depth_history[history_current].bind(2);
+            color_history[!history_current].bind(3);
+            depth_history[!history_current].bind(4);
+            scene_view.renderTAA(taa_program);
+
             // Apply a tonemap in compute shader
             {
                 tonemap_program->bind();

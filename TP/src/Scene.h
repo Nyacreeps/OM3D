@@ -26,6 +26,7 @@ class Scene : NonMovable {
         void renderShading(const Camera &camera, std::shared_ptr<Program> programp) const;
         void renderShadingSpheres(const Camera &camera, std::shared_ptr<Program> programp) const;
         void renderShadingDirectional(const Camera &camera, std::shared_ptr<Program> programp) const;
+        void renderTAA(const Camera& camera, std::shared_ptr<Program> programp) const;
         void render(const Camera& camera) const;
         void renderOcclusion(const Camera& camera, bool debug);
 

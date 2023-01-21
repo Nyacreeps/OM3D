@@ -208,6 +208,32 @@ void Scene::renderShadingDirectional(const Camera& camera,
     mat.set_depth_test_mode(DepthTestMode::None);
     mat.set_depth_mask_mode(DepthMaskMode::False);
     mat.set_program(programp);
+
+    mat.bind(RenderMode::INSTANCED);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+void Scene::renderTAA(const Camera& camera, std::shared_ptr<Program> programp) const {
+    // Fill and bind frame data buffer
+    auto buffer = fill_and_bind_frame_data_buffer(camera, _point_lights, _sun_direction);
+
+    TypedBuffer<shader::TAASettings> settings_buffer(nullptr, 1);
+    {
+        auto mapping = settings_buffer.map();
+        int vp[4];
+        glGetIntegerv(GL_VIEWPORT, vp);
+        int width = vp[2];
+        int height = vp[3];
+        mapping[0].window_size = glm::uvec2(width, height);
+    }
+    settings_buffer.bind(BufferUsage::Uniform, 1);
+
+    auto mat = Material();
+    mat.set_blend_mode(BlendMode::None);
+    mat.set_depth_test_mode(DepthTestMode::None);
+    mat.set_depth_mask_mode(DepthMaskMode::False);
+    mat.set_program(programp);
     mat.bind(RenderMode::INSTANCED);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
