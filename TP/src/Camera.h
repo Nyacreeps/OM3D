@@ -23,6 +23,7 @@ class Camera {
 
         void set_view(const glm::mat4& matrix);
         void set_proj(const glm::mat4& matrix);
+        void set_jitter(const glm::vec2& vec);
 
         glm::vec3 position() const;
         glm::vec3 forward() const;
@@ -41,6 +42,7 @@ class Camera {
 
         glm::mat4 _projection;
         glm::mat4 _view;
+        glm::vec2 _jitter;
         glm::mat4 _view_proj;
 
         float _fov_y;

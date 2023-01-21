@@ -30,7 +30,7 @@ glm::mat4 Camera::build_projection(float zNear) {
                   0.0f, 0.0f, zNear,  0.0f);
 }
 
-Camera::Camera(): _fov_y(to_rad(60.0f)), _aspect_ratio(16.0f / 9.0f) {
+Camera::Camera(): _jitter(0.0f, 0.0f), _fov_y(to_rad(60.0f)), _aspect_ratio(16.0f / 9.0f) {
     _projection = build_projection(0.001f);
     _view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     update();
@@ -43,6 +43,11 @@ void Camera::set_view(const glm::mat4& matrix) {
 
 void Camera::set_proj(const glm::mat4& matrix) {
     _projection = matrix;
+    update();
+}
+
+void Camera::set_jitter(const glm::vec2& vec) {
+    _jitter = vec;
     update();
 }
 
@@ -75,7 +80,10 @@ const glm::mat4& Camera::view_proj_matrix() const {
 }
 
 void Camera::update() {
-    _view_proj = _projection * _view;
+    auto proj = _projection;
+    proj[0][3] = _jitter.x;
+    proj[1][3] = _jitter.y;
+    _view_proj = proj * _view;
 }
 
 Frustum Camera::build_frustum() const {

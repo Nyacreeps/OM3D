@@ -164,7 +164,9 @@ int main(int, char**) {
     glfwSwapInterval(1); // Enable vsync
     init_graphics();
 
-    auto jitter_buffer = init_jitter(window_size);
+    size_t frame_counter = 0;
+    constexpr bool JITTER_ENABLED = true;
+    auto jitter_sequence = init_jitter(window_size);
 
     ImGuiRenderer imgui(window);
 
@@ -205,6 +207,10 @@ int main(int, char**) {
 
         if (const auto& io = ImGui::GetIO(); !io.WantCaptureMouse && !io.WantCaptureKeyboard) {
             process_inputs(window, scene_view.camera());
+        }
+
+        if constexpr (JITTER_ENABLED) {
+            scene_view.camera().set_jitter(jitter_sequence[frame_counter % JITTER_POINTS]);
         }
 
         // Render the scene to the gbuffer
@@ -289,6 +295,7 @@ int main(int, char**) {
         imgui.finish();
 
         glfwSwapBuffers(window);
+        ++frame_counter;
     }
 
     scene->deleteQueries();
