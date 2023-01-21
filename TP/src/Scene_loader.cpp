@@ -289,7 +289,7 @@ static void compute_tangents(MeshData& mesh) {
     }
 }
 
-Result<std::shared_ptr<StaticMesh>> meshFromGltf(const std::string& file_name) {
+Result<std::shared_ptr<StaticMesh>> Scene::meshFromGltf(const std::string& file_name) {
     tinygltf::TinyGLTF ctx;
     tinygltf::Model gltf;
 

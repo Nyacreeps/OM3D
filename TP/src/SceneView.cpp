@@ -2,7 +2,7 @@
 
 namespace OM3D {
 
-SceneView::SceneView(const Scene* scene) : _scene(scene) {
+SceneView::SceneView(Scene* scene) : _scene(scene) {
 }
 
 Camera& SceneView::camera() {
@@ -34,6 +34,12 @@ void SceneView::renderShadingDirectional(std::shared_ptr<Program> programp) cons
 void SceneView::render() const {
     if(_scene) {
         _scene->render(_camera);
+    }
+}
+
+void SceneView::renderOcclusion(bool debug) {
+    if(_scene) {
+        _scene->renderOcclusion(_camera, debug);
     }
 }
 

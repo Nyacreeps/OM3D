@@ -8,7 +8,7 @@ namespace OM3D {
 
 class SceneView {
     public:
-        SceneView(const Scene* scene = nullptr);
+        SceneView(Scene* scene = nullptr);
 
         Camera& camera();
         const Camera& camera() const;
@@ -17,9 +17,10 @@ class SceneView {
         void renderShadingSpheres(std::shared_ptr<Program> programp) const;
         void renderShadingDirectional(std::shared_ptr<Program> programp) const;
         void render() const;
+        void renderOcclusion(bool debug);
 
     private:
-        const Scene* _scene = nullptr;
+        Scene* _scene = nullptr;
         Camera _camera;
 
 };

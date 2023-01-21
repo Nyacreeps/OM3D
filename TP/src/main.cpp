@@ -55,6 +55,12 @@ void process_inputs(GLFWwindow* window, Camera& camera) {
         if (glfwGetKey(window, 'A') == GLFW_PRESS) {
             movement -= camera.right();
         }
+        if (glfwGetKey(window, ' ') == GLFW_PRESS) {
+            movement += camera.up();
+        }
+        if (glfwGetKey(window, 'C') == GLFW_PRESS) {
+            movement -= camera.up();
+        }
 
         float speed = 10.0f;
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
@@ -85,9 +91,36 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "cube.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
+    auto& object = scene->_objects[0];
+
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            for (int k = -1; k <= 1; k++) {
+                if (i == 0 && j == 0 && k == 0) continue;
+                auto obj1 = SceneObject(std::make_shared<StaticMesh>(StaticMesh::CubeMesh()),
+                                        Material::empty_material());
+                obj1.set_transform(
+                    glm::translate(object.transform(), {i * 4.0f, j * 4.0f, k * 4.0f}));
+                scene->add_object(std::move(obj1));
+            }
+        }
+    }
+
+    auto obj1 = SceneObject(std::make_shared<StaticMesh>(StaticMesh::CubeMesh()),
+                            Material::empty_material());
+    obj1.set_transform(glm::translate(glm::scale(object.transform(), glm::vec3(4.0f, 4.0f, 4.0f)),
+                                      {7.0f, 0.0f, 0.0f}));
+    scene->add_object(std::move(obj1));
+
+    auto obj2 = SceneObject(Scene::meshFromGltf(std::string(data_path) + "sphere.glb").value,
+                            Material::empty_material());
+    obj2.set_transform(glm::translate(glm::scale(object.transform(), glm::vec3(4.0f, 4.0f, 4.0f)),
+                                      {5.0f, 0.0f, 0.0f}));
+    obj2.mark = true;
+    scene->add_object(std::move(obj2));
 
     // Add lights
     {
@@ -147,13 +180,15 @@ int main(int, char**) {
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
     auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
-    auto shading_program1 = Program::from_files("shading.frag", "screen.vert");
+    auto shading_program = Program::from_files("shading.frag", "screen.vert");
     auto shadingspheres_program =
         Program::from_files("shading_spheres.frag", "shading_spheres.vert");
     auto shadingdirectional_program =
         Program::from_files("shading_directional.frag", "screen.vert");
+    auto occlusionrend_program = Program::from_files("prepass.frag", "basic.vert");
 
-    int debugMode = 0;
+    int gDebugMode = 0;
+    int occDebugMode = 0;
     int gBufferRenderMode = 0;
     bool renderSpheres = false;
 
@@ -170,22 +205,29 @@ int main(int, char**) {
         }
 
         // Render the scene to the gbuffer
-        {
+        scene->moveObjects(program_time(), [](double t) {
+            return glm::vec3(0.0f, 0.02f, 0.0f) * (sin(t / 10.0f * 2 * M_PI - M_PI_2) > 0 ? 1.0f : -1.0f);
+        });
+        scene->sortObjects(scene_view.camera());
+        if (gBufferRenderMode == 0) {
             gBuffer.bind();
             scene_view.render();
+        } else {
+            gBuffer.bind();
+            scene_view.renderOcclusion(occDebugMode);
         }
 
-        if (debugMode == 1) {
+        if (gDebugMode == 1) {
             gdebug_program1->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             albedo.bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-        } else if (debugMode == 2) {
+        } else if (gDebugMode == 2) {
             gdebug_program1->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             normals.bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-        } else if (debugMode == 3) {
+        } else if (gDebugMode == 3) {
             gdebug_program2->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             depth.bind(0);
@@ -199,7 +241,7 @@ int main(int, char**) {
                 scene_view.renderShadingDirectional(shadingdirectional_program);
                 scene_view.renderShadingSpheres(shadingspheres_program);
             } else {
-                scene_view.renderShading(shading_program1);
+                scene_view.renderShading(shading_program);
             }
             // Apply a tonemap in compute shader
             {
@@ -228,18 +270,24 @@ int main(int, char**) {
                     scene_view = SceneView(scene.get());
                 }
             }
+            ImGui::Text("Prepass");
             ImGui::RadioButton("Classic prepass", &gBufferRenderMode, 0);
             ImGui::RadioButton("Occlusion culling prepass", &gBufferRenderMode, 1);
-            ImGui::RadioButton("Normal display", &debugMode, 0);
-            ImGui::RadioButton("Display Gbuffer albedo", &debugMode, 1);
-            ImGui::RadioButton("Display Gbuffer normals", &debugMode, 2);
-            ImGui::RadioButton("Display Gbuffer depth", &debugMode, 3);
+            ImGui::Text("Display mode");
+            ImGui::RadioButton("Normal display", &gDebugMode, 0);
+            ImGui::RadioButton("Display Gbuffer albedo", &gDebugMode, 1);
+            ImGui::RadioButton("Display Gbuffer normals", &gDebugMode, 2);
+            ImGui::RadioButton("Display Gbuffer depth", &gDebugMode, 3);
             ImGui::Checkbox("Switch to volume based deferred shading", &renderSpheres);
+            ImGui::Text("Occlusion");
+            ImGui::RadioButton("Normal occlusion", &occDebugMode, 0);
+            ImGui::RadioButton("Display occludees in red", &occDebugMode, 1);
         }
         imgui.finish();
 
         glfwSwapBuffers(window);
     }
 
+    scene->deleteQueries();
     scene = nullptr; // destroy scene and child OpenGL objects
 }
