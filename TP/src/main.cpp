@@ -205,15 +205,14 @@ int main(int, char**) {
         }
 
         update_delta_time();
-
-        if (const auto& io = ImGui::GetIO(); !io.WantCaptureMouse && !io.WantCaptureKeyboard) {
-            process_inputs(window, scene_view.camera());
-        }
-
         if constexpr (TAA_ENABLED) {
             auto& camera = scene_view.camera();
             camera.new_frame();
             camera.set_jitter(jitter_sequence[frame_counter % JITTER_POINTS]);
+        }
+
+        if (const auto& io = ImGui::GetIO(); !io.WantCaptureMouse && !io.WantCaptureKeyboard) {
+            process_inputs(window, scene_view.camera());
         }
 
         // Render the scene to the gbuffer
