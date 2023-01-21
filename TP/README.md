@@ -5,7 +5,7 @@ Yorick Madelain, Ancelin Bouchet
 
 * Occlusion Culling : occlusion query on previous frame
 * TAA : need moving object to be verified
-  1. [ ] Implement Halton (2,3) 2D sequence (length TBD) for jitter
+  1. [x] Implement Halton (2,3) 2D sequence (length 16) for jitter
   2. [ ] Make rendering fill velocity buffer (during g-buffer pass)
   3. [ ] History buffer
   4. [ ] Blend between frames

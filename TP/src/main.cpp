@@ -11,6 +11,7 @@
 #include <Texture.h>
 #include <Framebuffer.h>
 #include <ImGuiRenderer.h>
+#include <jitter.h>
 
 #include <imgui/imgui.h>
 
@@ -162,6 +163,8 @@ int main(int, char**) {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
     init_graphics();
+
+    auto jitter_buffer = init_jitter(window_size);
 
     ImGuiRenderer imgui(window);
 
