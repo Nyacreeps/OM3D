@@ -32,6 +32,14 @@ void Scene::sortObjects(const Camera& camera) {
               });
 }
 
+/* void Scene::moveObjects(double time) {
+    for (auto& obj : _objects) {
+        if (obj._move) {
+            obj.set_transform(glm::translate(obj.transform(), obj._move(time)));
+        }
+    }
+} */
+
 void Scene::renderShading(const Camera& camera, std::shared_ptr<Program> programp) const {
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
