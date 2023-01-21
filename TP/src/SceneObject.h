@@ -7,7 +7,6 @@
 #include <memory>
 
 #include <glm/matrix.hpp>
-#include <functional>
 
 #include "Camera.h"
 

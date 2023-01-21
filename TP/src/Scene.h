@@ -4,12 +4,14 @@
 #include <SceneObject.h>
 #include <PointLight.h>
 #include <Camera.h>
+#include "Vertex.h"
 
 #include <glad/glad.h>
 #include <vector>
 #include <memory>
 #include <TypedBuffer.h>
-#include "Vertex.h"
+#include <functional>
+
 
 namespace OM3D {
 
@@ -30,7 +32,7 @@ class Scene : NonMovable {
         void add_object(SceneObject obj);
         void add_object(PointLight obj);
         void sortObjects(const Camera &camera);
-        //void moveObjects(double time);
+        void moveObjects(double time, std::function<glm::vec3(double)> func);
         
         std::vector<SceneObject> _objects;
         void deleteQueries() {

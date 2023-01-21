@@ -32,13 +32,16 @@ void Scene::sortObjects(const Camera& camera) {
               });
 }
 
-/* void Scene::moveObjects(double time) {
+void Scene::moveObjects(double time, std::function<glm::vec3(double)> func) {
     for (auto& obj : _objects) {
-        if (obj._move) {
+        /* if (obj._move) {
             obj.set_transform(glm::translate(obj.transform(), obj._move(time)));
+        } */
+        if (obj.mark) {
+            obj.set_transform(glm::translate(obj.transform(), func(time)));
         }
     }
-} */
+}
 
 void Scene::renderShading(const Camera& camera, std::shared_ptr<Program> programp) const {
     // Fill and bind frame data buffer
@@ -376,7 +379,6 @@ void Scene::renderOcclusion(const Camera& camera, bool debug) {
         glBeginQuery(GL_SAMPLES_PASSED, obj._queryId);
         obj._queryActive = true;
         if (samplesPassed != 0) {
-            if (obj.mark) std::cout << "center cube visible\n";
             obj._material->bind(RenderMode::NON_INSTANCED);
             obj._material->set_uniform(RenderMode::NON_INSTANCED, HASH("model"), obj.transform());
             obj._mesh->_vertex_buffer.bind(BufferUsage::Attribute);
@@ -405,7 +407,6 @@ void Scene::renderOcclusion(const Camera& camera, bool debug) {
             glDrawElements(GL_TRIANGLES, int(obj._mesh->_index_buffer.element_count()),
                            GL_UNSIGNED_INT, nullptr);
         } else if (samplesPassed == 0) {
-            if (obj.mark) std::cout << "center cube occluded\n";
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
             glDepthMask(GL_FALSE);
 

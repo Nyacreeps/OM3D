@@ -115,9 +115,11 @@ std::unique_ptr<Scene> create_default_scene() {
                                       {7.0f, 0.0f, 0.0f}));
     scene->add_object(std::move(obj1));
 
-    auto obj2 = SceneObject(Scene::meshFromGltf(std::string(data_path) + "sphere.glb").value, Material::empty_material());
+    auto obj2 = SceneObject(Scene::meshFromGltf(std::string(data_path) + "sphere.glb").value,
+                            Material::empty_material());
     obj2.set_transform(glm::translate(glm::scale(object.transform(), glm::vec3(4.0f, 4.0f, 4.0f)),
                                       {5.0f, 0.0f, 0.0f}));
+    obj2.mark = true;
     scene->add_object(std::move(obj2));
 
     // Add lights
@@ -203,7 +205,9 @@ int main(int, char**) {
         }
 
         // Render the scene to the gbuffer
-        //scene->moveObjects(program_time());
+        scene->moveObjects(program_time(), [](double t) {
+            return glm::vec3(0.0f, 0.02f, 0.0f) * (sin(t / 10.0f * 2 * M_PI - M_PI_2) > 0 ? 1.0f : -1.0f);
+        });
         scene->sortObjects(scene_view.camera());
         if (gBufferRenderMode == 0) {
             gBuffer.bind();
