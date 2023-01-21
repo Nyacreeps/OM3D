@@ -4,6 +4,7 @@
 
 namespace OM3D {
 static void convert_sub_pixel_jitter_to_world(glm::vec2& jitter, const glm::uvec2& window_size) {
+    // formula: dxw = dxp * ((right - left)/ width)
     jitter.x *= (1.0f / window_size.x);
     jitter.y *= (1.0f / window_size.y);
 }
