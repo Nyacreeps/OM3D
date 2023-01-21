@@ -98,8 +98,8 @@ const glm::vec2& Camera::prev_jitter_vector() const {
 
 void Camera::update() {
     auto proj = _projection;
-    proj[0][3] = _jitter.x;
-    proj[1][3] = _jitter.y;
+    proj[3][0] = _jitter.x;
+    proj[3][1] = _jitter.y;
     _view_proj = proj * _view;
 }
 
