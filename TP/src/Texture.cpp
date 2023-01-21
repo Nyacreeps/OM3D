@@ -77,6 +77,18 @@ const glm::uvec2& Texture::size() const {
     return _size;
 }
 
+void Texture::clear_with(float r, float g, float b, float a) {
+    auto gl_format = image_format_to_gl(_format);
+    float data[] = {r, g, b, a};
+    glClearTexImage(_handle.get(), 0, gl_format.format, gl_format.component_type, data);
+}
+
+void Texture::clear_with(float r, float g) {
+    auto gl_format = image_format_to_gl(_format);
+    float data[] = {r, g};
+    glClearTexImage(_handle.get(), 0, gl_format.format, gl_format.component_type, data);
+}
+
 // Return number of mip levels needed
 u32 Texture::mip_levels(glm::uvec2 size) {
     const float side = float(std::max(size.x, size.y));

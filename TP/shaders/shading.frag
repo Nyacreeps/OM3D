@@ -3,6 +3,7 @@
 #include "utils.glsl"
 
 layout(location = 0) out vec4 out_color;
+layout(location = 1) out vec4 out_history;
 
 layout(binding = 0) uniform sampler2D in_albedo;
 layout(binding = 1) uniform sampler2D in_normal;
@@ -48,5 +49,8 @@ void main() {
         acc += light.color * (NoL * att);
     }
 
-    out_color = vec4(albedo * acc, 0.0);
+    vec4 final_color = vec4(albedo * acc, 0.0);
+
+    out_color = final_color;
+    out_history = final_color;
 }

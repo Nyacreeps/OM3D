@@ -81,6 +81,17 @@ void Framebuffer::blit(bool depth) const {
         GL_COLOR_BUFFER_BIT | (depth ? GL_DEPTH_BUFFER_BIT : 0), GL_NEAREST);
 }
 
+void Framebuffer::replace_texture(int number, const Texture* new_texture) {
+    ALWAYS_ASSERT(number <= 8,
+                  "Render target number to swap texture of is higher than the maximum amount");
+    glNamedFramebufferTexture(_handle.get(), GLenum(GL_COLOR_ATTACHMENT0 + number),
+                              new_texture->_handle.get(), 0);
+}
+
+void Framebuffer::replace_depth_texture(const Texture* new_texture) {
+    glNamedFramebufferTexture(_handle.get(), GL_DEPTH_ATTACHMENT, new_texture->_handle.get(), 0);
+}
+
 const glm::uvec2& Framebuffer::size() const {
     return _size;
 }

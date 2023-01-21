@@ -31,6 +31,12 @@ void SceneView::renderShadingDirectional(std::shared_ptr<Program> programp) cons
     }
 }
 
+void SceneView::renderTAA(std::shared_ptr<Program> programp) const {
+    if(_scene) {
+        _scene->renderTAA(_camera, programp);
+    }
+}
+
 void SceneView::render() const {
     if(_scene) {
         _scene->render(_camera);

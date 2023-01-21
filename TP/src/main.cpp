@@ -11,6 +11,7 @@
 #include <Texture.h>
 #include <Framebuffer.h>
 #include <ImGuiRenderer.h>
+#include <jitter.h>
 
 #include <imgui/imgui.h>
 
@@ -163,6 +164,22 @@ int main(int, char**) {
     glfwSwapInterval(1); // Enable vsync
     init_graphics();
 
+    // TAA
+    size_t frame_counter = 0;
+    bool taa_enabled = true;
+    auto jitter_sequence = init_jitter(window_size);
+
+    constexpr size_t HISTORY_SIZE = 2;
+    Texture color_history[HISTORY_SIZE] = {
+        Texture(window_size, ImageFormat::RGBA16_FLOAT),
+        Texture(window_size, ImageFormat::RGBA16_FLOAT),
+    };
+    Texture depth_history[HISTORY_SIZE] = {
+        Texture(window_size, ImageFormat::Depth32_FLOAT),
+        Texture(window_size, ImageFormat::Depth32_FLOAT),
+    };
+    bool history_current = 0;
+
     ImGuiRenderer imgui(window);
 
     std::unique_ptr<Scene> scene = create_default_scene();
@@ -170,17 +187,20 @@ int main(int, char**) {
 
     auto tonemap_program = Program::from_file("tonemap.comp");
 
-    Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     Texture albedo(window_size, ImageFormat::RGBA8_sRGB);
     Texture normals(window_size, ImageFormat::RGBA8_UNORM);
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
-    Framebuffer gBuffer(&depth, std::array{&albedo, &normals});
-    Framebuffer mainFrameBuffer(&depth, std::array{&lit});
+    Texture velocity(window_size, ImageFormat::RG16_FLOAT);
+    Framebuffer gBuffer(&depth_history[0], std::array{&albedo, &normals, &velocity});
+    Framebuffer mainFrameBuffer(&depth_history[0], std::array{&lit});
+    Framebuffer taaBuffer(&depth_history[0], std::array{&lit, &color_history[0]});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     auto gdebug_program1 = Program::from_files("gdebug1.frag", "screen.vert");
     auto gdebug_program2 = Program::from_files("gdebug2.frag", "screen.vert");
     auto shading_program = Program::from_files("shading.frag", "screen.vert");
+
+    auto taa_program = Program::from_files("taa.frag", "screen.vert");
     auto shadingspheres_program =
         Program::from_files("shading_spheres.frag", "shading_spheres.vert");
     auto shadingdirectional_program =
@@ -200,6 +220,20 @@ int main(int, char**) {
 
         update_delta_time();
 
+        if (taa_enabled) {
+            history_current = !history_current;
+            taaBuffer.replace_texture(1, &color_history[history_current]);
+            taaBuffer.replace_depth_texture(&depth_history[history_current]);
+            gBuffer.replace_depth_texture(&depth_history[history_current]);
+            mainFrameBuffer.replace_depth_texture(&depth_history[history_current]);
+            auto& camera = scene_view.camera();
+            camera.new_frame();
+            camera.set_jitter(jitter_sequence[frame_counter % JITTER_POINTS]);
+        } else {
+            auto& camera = scene_view.camera();
+            camera.set_jitter(glm::vec2(0));
+        }
+
         if (const auto& io = ImGui::GetIO(); !io.WantCaptureMouse && !io.WantCaptureKeyboard) {
             process_inputs(window, scene_view.camera());
         }
@@ -211,6 +245,7 @@ int main(int, char**) {
         scene->sortObjects(scene_view.camera());
         if (gBufferRenderMode == 0) {
             gBuffer.bind();
+            velocity.clear_with(0.0f, 0.0f);
             scene_view.render();
         } else {
             gBuffer.bind();
@@ -230,19 +265,30 @@ int main(int, char**) {
         } else if (gDebugMode == 3) {
             gdebug_program2->bind();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            depth.bind(0);
+            depth_history[history_current].bind(0);
             glDrawArrays(GL_TRIANGLES, 0, 3);
         } else {
             mainFrameBuffer.bind(true, false);
             albedo.bind(0);
             normals.bind(1);
-            depth.bind(2);
+            depth_history[history_current].bind(2);
             if (renderSpheres) {
                 scene_view.renderShadingDirectional(shadingdirectional_program);
                 scene_view.renderShadingSpheres(shadingspheres_program);
             } else {
                 scene_view.renderShading(shading_program);
             }
+
+            if (taa_enabled) {
+                taaBuffer.bind(false, false);
+                lit.bind(0);
+                velocity.bind(1);
+                depth_history[history_current].bind(2);
+                color_history[!history_current].bind(3);
+                depth_history[!history_current].bind(4);
+                scene_view.renderTAA(taa_program);
+            }
+
             // Apply a tonemap in compute shader
             {
                 tonemap_program->bind();
@@ -282,10 +328,13 @@ int main(int, char**) {
             ImGui::Text("Occlusion");
             ImGui::RadioButton("Normal occlusion", &occDebugMode, 0);
             ImGui::RadioButton("Display occludees in red", &occDebugMode, 1);
+            ImGui::Text("TAA");
+            ImGui::Checkbox("Enable TAA", &taa_enabled);
         }
         imgui.finish();
 
         glfwSwapBuffers(window);
+        ++frame_counter;
     }
 
     scene->deleteQueries();

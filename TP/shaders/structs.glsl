@@ -1,5 +1,8 @@
 struct CameraData {
     mat4 view_proj;
+    mat4 prev_view_proj;
+    vec2 jitter;
+    vec2 prev_jitter;
 };
 
 struct FrameData {
@@ -19,3 +22,7 @@ struct PointLight {
     float padding_1;
 };
 
+struct TAASettings {
+    uvec2 window_size;
+    uvec2 padding_1;
+};
