@@ -48,6 +48,15 @@ Yorick Madelain - Ancelin Bouchet
 
 ### TAA
 
-* Ask Ancelin
+* Accumulates multiple frames to smooth contours removing aliasing
+* Camera moves a little each frame (jitter) to add variation, pixel may be filled or not with the correct probabilities on edges
+  * Jitter values generated using the repeated first 16 values of a Halton (2,3) sequence
+* Double buffered color and depth textures for historisation
+* Sampling current frame by weighted averaging 3x3 neighbourhood (filter: Mitchell-Netravali)
+* History sampled with closest (depth) velocity then clipped around current sample neighbourhood
+  * Both of these help reject sample when disocclusion happens
+* Mix between current and history sample favoring history heavily, depending on luminance
 
 ![taa](TP/data/taa_test.png)
+
+*Some artifacts are present*
