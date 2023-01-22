@@ -96,6 +96,10 @@ vec4 TAA_pixel_color() {
     float closest_depth = 0.0;
     vec2 closest_depth_pixel_position = vec2(0);
 
+    // 3x3 neighbourhood loop for:
+    // - averaging filter on source texture
+    // - finding min/max of neighbourhood (used for clipping later)
+    // - find closest depth
     for (int x = -1; x <= 1; ++x) {
         for(int y = -1; y <= 1; ++y) {
             vec2 pixel_position = in_uv.xy + vec2(x,y) * pix_scale - frame.camera.jitter;
@@ -127,12 +131,14 @@ vec4 TAA_pixel_color() {
     vec2 history_tex_coord = in_uv - velocity;
     vec3 source_sample = source_sample_total / source_sample_total_weight;
 
+    // early return if sample is outside of history texture
     if (any(notEqual(history_tex_coord, saturate(history_tex_coord)))) {
         return vec4(source_sample, 1.0);
     }
 
     vec3 history_sample = texture(in_color_history, history_tex_coord).rgb; // TODO replace with filtered sampling ?
 
+    // clipping history sample to color in neighbourhood of source sample
     vec3 mu = acc * SAMPLE_COUNT_INV;
     vec3 sigma = sqrt(abs((acc_sq * SAMPLE_COUNT_INV) - (mu * mu)));
     vec3 minc = mu - GAMMA * sigma;
@@ -140,11 +146,12 @@ vec4 TAA_pixel_color() {
 
     history_sample = clip_aabb(minc, maxc, vec4(clamp(source_sample, neighbourhood_min, neighbourhood_max), 1.0), vec4(history_sample, 1.0)).rgb;
 
+    // mixing source and history sample together
     float source_weight = SOURCE_WEIGHT;
     float history_weight = HISTORY_WEIGHT;
 
-    vec3 compressed_source = source_sample * (1.0/(max_comp(source_sample.rgb) + 1.0));
-    vec3 compressed_history = history_sample * (1.0/(max_comp(history_sample.rgb)+1.0));
+    vec3 compressed_source = source_sample * (1.0 / (max_comp(source_sample.rgb) + 1.0));
+    vec3 compressed_history = history_sample * (1.0 / (max_comp(history_sample.rgb) + 1.0));
 
     float luminance_source = luminance(compressed_source);
     float luminance_history = luminance(compressed_history);
