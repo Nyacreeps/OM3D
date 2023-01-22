@@ -13,7 +13,7 @@ static void convert_sub_pixel_jitter_to_world(glm::vec2& jitter, const glm::uvec
 
 JitterSequence init_jitter(const glm::uvec2& window_size) {
     auto jitter = pregenerate_halton_2_3<JITTER_POINTS>();
-    for (size_t i = 0; i < 16; ++i) {
+    for (size_t i = 0; i < JITTER_POINTS; ++i) {
         convert_sub_pixel_jitter_to_world(jitter[i], window_size);
     }
     return jitter;
