@@ -13,6 +13,10 @@
 #define SOURCE_WEIGHT 0.05
 #define HISTORY_WEIGHT 1.0 - SOURCE_WEIGHT
 
+// toggles whether we subtract the jitter from the uvs when 
+// sampling the just rendered source image
+#define UNJITTER_SOURCE_SAMPLE 0
+
 layout(location = 0) in vec2 in_uv;
 
 layout(location = 0) out vec4 out_color;
@@ -102,7 +106,11 @@ vec4 TAA_pixel_color() {
     // - find closest depth
     for (int x = -1; x <= 1; ++x) {
         for(int y = -1; y <= 1; ++y) {
+            #if UNJITTER_SOURCE_SAMPLE
             vec2 pixel_position = in_uv.xy + vec2(x,y) * pix_scale - frame.camera.jitter;
+            #else
+            vec2 pixel_position = in_uv.xy + vec2(x,y) * pix_scale;
+            #endif
             pixel_position = clamp(pixel_position, vec2(0), vec2(1.0));
 
             vec3 neighbour_color = max(vec3(0), texture(in_color, pixel_position).rgb);
