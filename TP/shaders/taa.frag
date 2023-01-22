@@ -83,6 +83,7 @@ float max3(float a, float b, float c) {
 // A lot taken from: https://alextardif.com/TAA.html
 // Seems like a decent resource
 vec4 TAA_pixel_color() {
+    vec2 pix_scale = 1.0 / vec2(settings.window_size);
     vec3 neighbourhood_max = vec3(-99999);
     vec3 neighbourhood_min = vec3(99999);
 
@@ -93,14 +94,14 @@ vec4 TAA_pixel_color() {
     vec3 acc_sq = vec3(0);
 
     float closest_depth = 0.0;
-    ivec2 closest_depth_pixel_position = ivec2(0);
+    vec2 closest_depth_pixel_position = vec2(0);
 
     for (int x = -1; x <= 1; ++x) {
         for(int y = -1; y <= 1; ++y) {
-            ivec2 pixel_position = ivec2(gl_FragCoord.xy + vec2(x,y));
-            pixel_position = clamp(pixel_position, ivec2(0), ivec2(settings.window_size) - 1);
+            vec2 pixel_position = in_uv.xy + vec2(x,y) * pix_scale - frame.camera.jitter;
+            pixel_position = clamp(pixel_position, vec2(0), vec2(1.0));
 
-            vec3 neighbour_color = max(vec3(0), texelFetch(in_color, pixel_position, 0).rgb);
+            vec3 neighbour_color = max(vec3(0), texture(in_color, pixel_position).rgb);
 
             float sub_sample_distance = length(vec2(x,y));
             float sub_sample_weight = Mitchell_Netravali(sub_sample_distance);
@@ -114,7 +115,7 @@ vec4 TAA_pixel_color() {
             acc += neighbour_color;
             acc_sq += neighbour_color * neighbour_color;
 
-            float current_depth = texelFetch(in_depth, pixel_position, 0).r;
+            float current_depth = texture(in_depth, pixel_position).r;
             if (current_depth > closest_depth) {
                 closest_depth = current_depth;
                 closest_depth_pixel_position = pixel_position;
@@ -122,7 +123,7 @@ vec4 TAA_pixel_color() {
         }
     }
 
-    vec2 velocity = texelFetch(in_velocity, closest_depth_pixel_position, 0).xy;
+    vec2 velocity = texture(in_velocity, closest_depth_pixel_position).xy;
     vec2 history_tex_coord = in_uv - velocity;
     vec3 source_sample = source_sample_total / source_sample_total_weight;
 
